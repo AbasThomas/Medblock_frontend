@@ -1,26 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Award,
   Camera,
   Edit3,
   Loader2,
   Save,
+  ShieldCheck,
+  Upload,
   User,
+  HeartPulse,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { PLAN_CATALOG } from "@/lib/pricing";
 import { updateProfile } from "@/lib/supabase/queries";
 import { getInitials, cn } from "@/lib/utils";
-import { PLAN_PRICING } from "@/lib/mock-data";
 
 type Profile = {
   id: string;
   email: string;
   name: string;
   role: string;
-  plan: string;
+  plan: "basic" | "premium" | "enterprise";
   university: string;
   department?: string;
   matric_number?: string;
@@ -29,18 +32,22 @@ type Profile = {
   points: number;
 };
 
-const BADGES = [
-  { id: "first-upload", name: "First Upload", icon: "📤", desc: "Uploaded your first resource", color: "bg-blue-100" },
-  { id: "resource-hero", name: "Resource Hero", icon: "🦸", desc: "10+ verified uploads", color: "bg-emerald-100" },
-  { id: "gig-finder", name: "Gig Finder", icon: "💼", desc: "Applied to a gig opportunity", color: "bg-orange-100" },
-  { id: "wellness-warrior", name: "Wellness Warrior", icon: "💪", desc: "7 consecutive wellness check-ins", color: "bg-purple-100" },
-];
+type ActivityStats = {
+  uploads: number;
+  verifiedUploads: number;
+  wellnessDays: number;
+};
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activity, setActivity] = useState<ActivityStats>({
+    uploads: 0,
+    verifiedUploads: 0,
+    wellnessDays: 0,
+  });
 
   const [form, setForm] = useState({
     name: "",
@@ -50,31 +57,62 @@ export default function ProfilePage() {
     bio: "",
   });
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-        if (data) {
-          setProfile({ ...data, email: user.email ?? "" });
+        const [profileRes, uploadsRes, verifiedRes, wellnessRes] = await Promise.all([
+          supabase.from("profiles").select("*").eq("id", user.id).single(),
+          supabase
+            .from("resources")
+            .select("id", { count: "exact", head: true })
+            .eq("uploaded_by", user.id),
+          supabase
+            .from("resources")
+            .select("id", { count: "exact", head: true })
+            .eq("uploaded_by", user.id)
+            .eq("is_verified", true),
+          supabase
+            .from("chat_messages")
+            .select("created_at")
+            .eq("user_id", user.id)
+            .eq("role", "user")
+            .limit(500),
+        ]);
+
+        if (profileRes.data) {
+          setProfile({ ...profileRes.data, email: user.email ?? "" });
           setForm({
-            name: data.name ?? "",
-            university: data.university ?? "",
-            department: data.department ?? "",
-            matric_number: data.matric_number ?? "",
-            bio: data.bio ?? "",
+            name: profileRes.data.name ?? "",
+            university: profileRes.data.university ?? "",
+            department: profileRes.data.department ?? "",
+            matric_number: profileRes.data.matric_number ?? "",
+            bio: profileRes.data.bio ?? "",
           });
         }
+
+        const distinctWellnessDays = new Set(
+          (wellnessRes.data ?? []).map((row) => String(row.created_at).slice(0, 10)),
+        );
+
+        setActivity({
+          uploads: uploadsRes.count ?? 0,
+          verifiedUploads: verifiedRes.count ?? 0,
+          wellnessDays: distinctWellnessDays.size,
+        });
       } catch {
-        // graceful fallback
+        // Graceful fallback when tables are unavailable.
       } finally {
         setLoading(false);
       }
     };
+
     void load();
   }, [supabase]);
 
@@ -83,15 +121,55 @@ export default function ProfilePage() {
     try {
       setSaving(true);
       const updated = await updateProfile(supabase, profile.id, form);
-      setProfile((prev) => prev ? { ...prev, ...updated } : prev);
+      setProfile((prev) => (prev ? { ...prev, ...updated } : prev));
       setEditing(false);
-      toast.success("Profile updated successfully!");
+      toast.success("Profile updated successfully.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save.");
+      toast.error(err instanceof Error ? err.message : "Failed to save profile.");
     } finally {
       setSaving(false);
     }
   };
+
+  const planInfo = PLAN_CATALOG[(profile?.plan ?? "basic") as keyof typeof PLAN_CATALOG];
+
+  const badges = useMemo(
+    () => [
+      {
+        id: "first-upload",
+        name: "First Contribution",
+        desc: "Upload at least one resource.",
+        earned: activity.uploads >= 1,
+        progress: `${Math.min(activity.uploads, 1)}/1`,
+        icon: Upload,
+      },
+      {
+        id: "verified-contributor",
+        name: "Verified Contributor",
+        desc: "Publish 10 verified resources.",
+        earned: activity.verifiedUploads >= 10,
+        progress: `${Math.min(activity.verifiedUploads, 10)}/10`,
+        icon: ShieldCheck,
+      },
+      {
+        id: "wellness-consistency",
+        name: "Wellness Consistency",
+        desc: "Check in for 7 distinct days.",
+        earned: activity.wellnessDays >= 7,
+        progress: `${Math.min(activity.wellnessDays, 7)}/7`,
+        icon: HeartPulse,
+      },
+      {
+        id: "points-milestone",
+        name: "Points Milestone",
+        desc: "Reach 500 engagement points.",
+        earned: (profile?.points ?? 0) >= 500,
+        progress: `${Math.min(profile?.points ?? 0, 500)}/500`,
+        icon: Award,
+      },
+    ],
+    [activity, profile?.points],
+  );
 
   if (loading) {
     return (
@@ -101,41 +179,38 @@ export default function ProfilePage() {
     );
   }
 
-  const planInfo = PLAN_PRICING[profile?.plan as keyof typeof PLAN_PRICING ?? "basic"];
-
   return (
     <div className="mx-auto max-w-3xl space-y-6 animate-fade-in">
-      {/* Profile card */}
-      <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl relative">
-        <div className="h-32 bg-hero-gradient relative overflow-hidden">
+      <div className="glass-panel relative overflow-hidden rounded-3xl shadow-2xl">
+        <div className="relative h-32 overflow-hidden bg-hero-gradient">
           <div className="absolute inset-0 bg-black/20"></div>
-          <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-[#0A8F6A]/20 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-[#0A8F6A]/20 blur-3xl"></div>
         </div>
-        <div className="px-8 pb-8 relative z-10">
-          <div className="flex flex-col sm:flex-row items-end justify-between gap-6">
+        <div className="relative z-10 px-8 pb-8">
+          <div className="flex flex-col items-end justify-between gap-6 sm:flex-row">
             <div className="-mt-12 flex items-end gap-6">
-              <div className="relative group">
+              <div className="group relative">
                 <div className="flex h-28 w-28 items-center justify-center rounded-3xl border-4 border-black/40 bg-[#0A8F6A] text-4xl font-bold text-white shadow-2xl shadow-emerald-500/20 transition-transform duration-500 group-hover:scale-105">
                   {profile ? getInitials(profile.name || profile.email) : <User className="h-12 w-12" />}
                 </div>
-                <button className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-xl bg-black/60 border border-white/10 text-white shadow-xl hover:bg-[#0A8F6A] transition-all">
+                <button className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-black/60 text-white shadow-xl transition-all hover:bg-[#0A8F6A]">
                   <Camera className="h-4 w-4" />
                 </button>
               </div>
               <div className="mb-2">
-                <p className="text-2xl font-medium tracking-tight text-white mb-0.5">{profile?.name || "Student Profile"}</p>
-                <p className="text-sm text-neutral-500 font-light">{profile?.email}</p>
+                <p className="mb-0.5 text-2xl font-medium tracking-tight text-white">{profile?.name || "Student Profile"}</p>
+                <p className="text-sm font-light text-neutral-500">{profile?.email}</p>
               </div>
             </div>
 
             <button
-              onClick={() => editing ? void handleSave() : setEditing(true)}
+              onClick={() => (editing ? void handleSave() : setEditing(true))}
               disabled={saving}
               className={cn(
                 "mb-2 flex items-center gap-2 rounded-xl px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all",
                 editing
                   ? "bg-[#0A8F6A] text-white shadow-lg shadow-emerald-500/20"
-                  : "bg-white/5 border border-white/10 text-neutral-400 hover:text-white hover:border-white/20",
+                  : "border border-white/10 bg-white/5 text-neutral-400 hover:text-white hover:border-white/20",
               )}
             >
               {saving ? (
@@ -150,14 +225,14 @@ export default function ProfilePage() {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <span className="rounded-full bg-white/5 border border-white/5 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+            <span className="rounded-full border border-white/5 bg-white/5 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-neutral-500">
               {profile?.role ?? "Student"}
             </span>
-            <span className="rounded-full bg-[#0A8F6A]/10 border border-[#0A8F6A]/20 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#0A8F6A] shadow-[0_0_15px_rgba(10,143,106,0.1)]">
-              {profile?.plan ?? "Standard"} Plan
+            <span className="rounded-full border border-[#0A8F6A]/20 bg-[#0A8F6A]/10 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#0A8F6A] shadow-[0_0_15px_rgba(10,143,106,0.1)]">
+              {planInfo.name} Plan
             </span>
             {profile?.university && (
-              <span className="rounded-full bg-white/5 border border-white/5 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+              <span className="rounded-full border border-white/5 bg-white/5 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-neutral-500">
                 {profile.university}
               </span>
             )}
@@ -166,16 +241,15 @@ export default function ProfilePage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Personal info form */}
-        <div className="lg:col-span-2 space-y-8 rounded-3xl border border-white/5 bg-black/40 p-8 shadow-2xl backdrop-blur-md">
+        <div className="space-y-8 rounded-3xl border border-white/5 bg-black/40 p-8 shadow-2xl backdrop-blur-md lg:col-span-2">
           <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A]">Profile Information</h2>
 
           <div className="grid gap-6 sm:grid-cols-2">
             {[
-              { label: "FULL NAME", key: "name", placeholder: "Tunde Adesanya" },
-              { label: "INSTITUTION", key: "university", placeholder: "University of Lagos" },
-              { label: "DEPARTMENT", key: "department", placeholder: "Computer Science" },
-              { label: "MATRIC NUMBER", key: "matric_number", placeholder: "190404001" },
+              { label: "Full Name", key: "name", placeholder: "Tunde Adesanya" },
+              { label: "Institution", key: "university", placeholder: "University of Lagos" },
+              { label: "Department", key: "department", placeholder: "Computer Science" },
+              { label: "Matric Number", key: "matric_number", placeholder: "190404001" },
             ].map(({ label, key, placeholder }) => (
               <div key={key}>
                 <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-neutral-500">{label}</label>
@@ -187,8 +261,8 @@ export default function ProfilePage() {
                   className={cn(
                     "w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all duration-300",
                     editing
-                      ? "bg-black/20 border-white/10 text-white focus:border-[#0A8F6A]/50"
-                      : "bg-white/5 border-transparent text-neutral-500 cursor-default",
+                      ? "border-white/10 bg-black/20 text-white focus:border-[#0A8F6A]/50"
+                      : "cursor-default border-transparent bg-white/5 text-neutral-500",
                   )}
                 />
               </div>
@@ -196,18 +270,18 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-neutral-500">ENTITY BIO</label>
+            <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-neutral-500">Bio</label>
             <textarea
               value={form.bio}
               onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
-              placeholder="Define your tactical objectives..."
+              placeholder="Share your academic focus, professional interests, and goals."
               disabled={!editing}
               rows={4}
               className={cn(
-                "w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all duration-300 resize-none",
+                "w-full resize-none rounded-xl border px-4 py-3 text-sm outline-none transition-all duration-300",
                 editing
-                  ? "bg-black/20 border-white/10 text-white focus:border-[#0A8F6A]/50"
-                  : "bg-white/5 border-transparent text-neutral-500 cursor-default",
+                  ? "border-white/10 bg-black/20 text-white focus:border-[#0A8F6A]/50"
+                  : "cursor-default border-transparent bg-white/5 text-neutral-500",
               )}
             />
           </div>
@@ -216,7 +290,7 @@ export default function ProfilePage() {
             <div className="flex gap-4 pt-4">
               <button
                 onClick={() => setEditing(false)}
-                className="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-white transition-all"
+                className="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-xs font-bold uppercase tracking-widest text-neutral-400 transition-all hover:text-white"
               >
                 Cancel
               </button>
@@ -232,47 +306,45 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Points & Plan */}
         <div className="space-y-6">
-          {/* Points */}
-          <div className="glass-panel border-white/5 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0A8F6A]/5 to-transparent pointer-events-none"></div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A] mb-4">Academic Rewards</p>
-            <div className="flex items-center justify-between mb-6">
+          <div className="glass-panel relative overflow-hidden rounded-2xl border-white/5 p-6 shadow-2xl">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#0A8F6A]/5 to-transparent"></div>
+            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A]">Engagement Points</p>
+            <div className="mb-6 flex items-center justify-between">
               <div>
-                <p className="text-4xl font-bold text-white tracking-tighter">{profile?.points ?? 0}</p>
-                <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest mt-1">Total Points Earned</p>
+                <p className="text-4xl font-bold tracking-tighter text-white">{profile?.points ?? 0}</p>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-neutral-500">Total Points</p>
               </div>
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0A8F6A]/10 border border-[#0A8F6A]/20 shadow-[0_0_20px_rgba(10,143,106,0.2)]">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#0A8F6A]/20 bg-[#0A8F6A]/10 shadow-[0_0_20px_rgba(10,143,106,0.2)]">
                 <Award className="h-7 w-7 text-[#0A8F6A]" />
               </div>
             </div>
-            <div className="h-2 w-full rounded-full bg-white/5 border border-white/5 overflow-hidden">
+            <div className="h-2 w-full overflow-hidden rounded-full border border-white/5 bg-white/5">
               <div
                 className="h-full rounded-full bg-[#0A8F6A] shadow-[0_0_15px_rgba(10,143,106,0.6)] transition-all duration-1000"
                 style={{ width: `${Math.min(100, ((profile?.points ?? 0) / 1000) * 100)}%` }}
               />
             </div>
-            <p className="mt-3 text-[10px] text-neutral-500 font-light flex justify-between">
-              <span>Next Level Goal: 1,000</span>
-              <span className="font-bold text-[#0A8F6A]">{Math.max(0, 1000 - (profile?.points ?? 0))} TO GO</span>
+            <p className="mt-3 flex justify-between text-[10px] font-light text-neutral-500">
+              <span>Next goal: 1,000</span>
+              <span className="font-bold text-[#0A8F6A]">{Math.max(0, 1000 - (profile?.points ?? 0))} remaining</span>
             </p>
           </div>
 
-          {/* Plan */}
-          <div className="glass-panel border-white/5 rounded-2xl p-6 shadow-2xl relative">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-500 mb-4">Subscription Plan</p>
-            <p className="text-2xl font-medium tracking-tight text-white capitalize mb-1">{profile?.plan ?? "Standard"} Plan</p>
-            <p className="text-xs text-neutral-500 font-light mb-6">{planInfo?.price}</p>
-            <ul className="space-y-3 mb-8">
-              {(planInfo?.highlights ?? []).map((f) => (
-                <li key={f} className="flex items-start gap-3 text-xs text-neutral-400 font-light">
-                  <span className="mt-0.5 text-[#0A8F6A] font-bold">»</span> {f}
+          <div className="glass-panel relative rounded-2xl border-white/5 p-6 shadow-2xl">
+            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-orange-500">Subscription</p>
+            <p className="mb-1 text-2xl font-medium tracking-tight text-white">{planInfo.name}</p>
+            <p className="mb-2 text-xs font-light text-neutral-500">{planInfo.priceLabel}</p>
+            <p className="mb-6 text-xs font-light text-neutral-500">{planInfo.summary}</p>
+            <ul className="mb-8 space-y-3">
+              {planInfo.highlights.map((feature) => (
+                <li key={feature} className="flex items-start gap-3 text-xs font-light text-neutral-400">
+                  <span className="mt-0.5 font-bold text-[#0A8F6A]">•</span> {feature}
                 </li>
               ))}
             </ul>
             {profile?.plan !== "premium" && (
-              <button className="w-full rounded-xl bg-[#0A8F6A] py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20 hover:opacity-90 transition-all">
+              <button className="w-full rounded-xl bg-[#0A8F6A] py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20 transition-all hover:opacity-90">
                 Upgrade to Premium
               </button>
             )}
@@ -280,23 +352,30 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Badges */}
-      <div className="glass-panel border-white/5 rounded-3xl p-8 shadow-2xl relative">
-        <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A] mb-2">Achievements & Badges</h2>
-        <p className="text-sm text-neutral-500 font-light mb-8">
-          Unlock rewards by completing core UniBridge activities.
+      <div className="glass-panel relative rounded-3xl border-white/5 p-8 shadow-2xl">
+        <h2 className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A]">Achievements</h2>
+        <p className="mb-8 text-sm font-light text-neutral-500">
+          Achievement status is calculated from your account activity in real time.
         </p>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {BADGES.map(({ id, name, icon, desc }) => (
+          {badges.map(({ id, name, desc, earned, progress, icon: Icon }) => (
             <div
               key={id}
-              className="flex flex-col items-center rounded-2xl border border-white/5 bg-white/[0.02] p-6 text-center group transition-all duration-300 hover:bg-[#0A8F6A]/5 hover:border-[#0A8F6A]/20"
+              className={cn(
+                "group flex flex-col items-center rounded-2xl border p-6 text-center transition-all duration-300",
+                earned
+                  ? "border-[#0A8F6A]/30 bg-[#0A8F6A]/5"
+                  : "border-white/5 bg-white/[0.02] hover:border-[#0A8F6A]/20",
+              )}
             >
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5 text-3xl shadow-xl grayscale group-hover:grayscale-0 transition-all duration-500">
-                {icon}
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-xl transition-all duration-500 group-hover:scale-105">
+                <Icon className={cn("h-10 w-10", earned ? "text-[#0A8F6A]" : "text-neutral-500")} />
               </div>
-              <p className="mt-4 text-xs font-bold uppercase tracking-widest text-neutral-400 group-hover:text-white">{name}</p>
-              <p className="mt-2 text-[10px] text-neutral-600 font-light leading-relaxed group-hover:text-neutral-400">{desc}</p>
+              <p className="mt-4 text-xs font-bold uppercase tracking-widest text-neutral-300">{name}</p>
+              <p className="mt-2 text-[10px] font-light leading-relaxed text-neutral-500">{desc}</p>
+              <p className={cn("mt-3 text-[10px] font-bold uppercase tracking-widest", earned ? "text-[#0A8F6A]" : "text-neutral-600")}>
+                {earned ? "Completed" : `Progress ${progress}`}
+              </p>
             </div>
           ))}
         </div>

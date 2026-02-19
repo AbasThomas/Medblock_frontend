@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   BookOpen,
+  ChevronsLeft,
+  ChevronsRight,
   HeartPulse,
   LayoutDashboard,
   LogOut,
@@ -15,13 +17,14 @@ import {
   User,
   Video,
   X,
-  Zap,
   Shield,
   Cpu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+
+const SIDEBAR_COLLAPSED_KEY = "unibridge.sidebar.collapsed";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
@@ -41,12 +44,14 @@ function NavLink({
   label,
   icon: Icon,
   exact,
+  collapsed,
   onClick,
 }: {
   href: string;
   label: string;
   icon: React.ElementType;
   exact?: boolean;
+  collapsed?: boolean;
   onClick?: () => void;
 }) {
   const pathname = usePathname();
@@ -56,36 +61,55 @@ function NavLink({
     <Link
       href={href}
       onClick={onClick}
+      title={collapsed ? label : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-4 py-3 text-xs font-bold uppercase tracking-[0.15em] transition-all duration-300 relative group overflow-hidden border",
+        "group relative overflow-hidden rounded-xl border px-4 py-3 text-xs font-bold uppercase tracking-[0.15em] transition-all duration-300",
+        collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-3",
         isActive
-          ? "bg-[#0A8F6A]/10 text-white border-[#0A8F6A]/30 shadow-[0_0_20px_rgba(10,143,106,0.1)]"
-          : "text-neutral-500 border-transparent hover:text-white hover:bg-white/[0.02] hover:border-white/5"
+          ? "border-[#0A8F6A]/30 bg-[#0A8F6A]/10 text-white shadow-[0_0_20px_rgba(10,143,106,0.1)]"
+          : "border-transparent text-neutral-500 hover:border-white/5 hover:bg-white/[0.02] hover:text-white",
       )}
     >
-      <div className={cn(
-        "absolute left-0 top-0 h-full w-1 bg-[#0A8F6A] transition-transform duration-500",
-        isActive ? "scale-y-100" : "scale-y-0"
-      )} />
-      <div className={cn(
-        "absolute inset-0 bg-gradient-to-r from-[#0A8F6A]/5 to-transparent transition-opacity duration-500",
-        isActive ? "opacity-100" : "opacity-0"
-      )} />
+      <div
+        className={cn(
+          "absolute left-0 top-0 h-full w-1 bg-[#0A8F6A] transition-transform duration-500",
+          isActive ? "scale-y-100" : "scale-y-0",
+        )}
+      />
+      <div
+        className={cn(
+          "absolute inset-0 bg-gradient-to-r from-[#0A8F6A]/5 to-transparent transition-opacity duration-500",
+          isActive ? "opacity-100" : "opacity-0",
+        )}
+      />
 
-      <Icon className={cn(
-        "h-4 w-4 shrink-0 transition-all duration-300 relative z-10",
-        isActive ? "text-[#0A8F6A] drop-shadow-[0_0_8px_rgba(10,143,106,0.6)]" : "group-hover:text-white"
-      )} />
-      <span className="relative z-10">{label}</span>
+      <Icon
+        className={cn(
+          "relative z-10 shrink-0 transition-all duration-300",
+          collapsed ? "h-6 w-6" : "h-6 w-6",
+          isActive ? "text-[#0A8F6A] drop-shadow-[0_0_8px_rgba(10,143,106,0.6)]" : "group-hover:text-white",
+        )}
+      />
+      {!collapsed && <span className="relative z-10">{label}</span>}
 
-      {isActive && (
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 h-1 w-1 rounded-full bg-[#0A8F6A] shadow-[0_0_8px_rgba(10,143,106,1)]" />
+      {isActive && !collapsed && (
+        <div className="absolute right-3 top-1/2 h-1 w-1 -translate-y-1/2 rounded-full bg-[#0A8F6A] shadow-[0_0_8px_rgba(10,143,106,1)]" />
       )}
     </Link>
   );
 }
 
-function SidebarContent({ role, onClose }: { role?: string; onClose?: () => void }) {
+function SidebarContent({
+  role,
+  collapsed,
+  onToggleCollapse,
+  onClose,
+}: {
+  role?: string;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+  onClose?: () => void;
+}) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -100,58 +124,74 @@ function SidebarContent({ role, onClose }: { role?: string; onClose?: () => void
   };
 
   return (
-    <div className="flex h-full flex-col backdrop-blur-md bg-black/40 border-r border-white/5">
-      {/* Logo */}
-      <div className="flex items-center justify-between px-6 py-6 border-b border-white/5">
-        <Link href="/" className="flex items-center gap-2 group" onClick={onClose}>
-          <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-[#0A8F6A]/10 border border-[#0A8F6A]/20 group-hover:bg-[#0A8F6A]/20 transition-all">
-            <Cpu className="h-4 w-4 text-[#0A8F6A]" />
+    <div className="flex h-full flex-col border-r border-white/5 bg-black/40 backdrop-blur-md">
+      <div className={cn("flex items-center justify-between border-b border-white/5 px-4 py-6", collapsed ? "px-3" : "px-6")}>
+        <Link href="/" className={cn("group flex items-center", collapsed ? "justify-center" : "gap-3")} onClick={onClose} title={collapsed ? "UniBridge" : undefined}>
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-[#0A8F6A]/20 bg-[#0A8F6A]/10 transition-all group-hover:bg-[#0A8F6A]/20">
+            <Cpu className="h-6 w-6 text-[#0A8F6A]" />
           </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-sm text-white tracking-tight">UniBridge</span>
-            <span className="text-[10px] text-neutral-500 uppercase tracking-widest">Protocol</span>
-          </div>
+          {!collapsed && (
+            <div className="flex flex-col">
+              <span className="text-sm font-bold tracking-tight text-white">UniBridge</span>
+              <span className="text-[10px] uppercase tracking-widest text-neutral-500">Platform</span>
+            </div>
+          )}
         </Link>
         {onClose && (
-          <button onClick={onClose} className="rounded-lg p-1 text-neutral-400 hover:text-white hover:bg-white/5 lg:hidden">
-            <X className="h-4 w-4" />
+          <button onClick={onClose} className="rounded-lg p-1 text-neutral-400 transition-all hover:bg-white/5 hover:text-white lg:hidden">
+            <X className="h-5 w-5" />
+          </button>
+        )}
+        {!onClose && onToggleCollapse && (
+          <button
+            onClick={onToggleCollapse}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="rounded-lg p-1 text-neutral-400 transition-all hover:bg-white/5 hover:text-white"
+          >
+            {collapsed ? <ChevronsRight className="h-5 w-5" /> : <ChevronsLeft className="h-5 w-5" />}
           </button>
         )}
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 space-y-1 px-4 py-6 overflow-y-auto">
-        <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
-          Navigation
-        </p>
+      <nav className={cn("flex-1 overflow-y-auto py-6", collapsed ? "space-y-3 px-3" : "space-y-1 px-4")}>
+        {!collapsed && (
+          <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
+            Navigation
+          </p>
+        )}
         <div className="space-y-1">
           {NAV_ITEMS.map((item) => (
-            <NavLink key={item.href} {...item} onClick={onClose} />
+            <NavLink key={item.href} {...item} collapsed={collapsed} onClick={onClose} />
           ))}
         </div>
 
-        <div className="mt-8">
-          <p className="mb-4 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A]">
-            AI SERVICES
-          </p>
+        <div className={cn(collapsed ? "mt-4" : "mt-8")}>
+          {!collapsed && (
+            <p className="mb-4 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A]">
+              AI Services
+            </p>
+          )}
           <div className="space-y-1">
-            <NavLink href="/dashboard/ai-tools" label="AI Toolkit" icon={Sparkles} onClick={onClose} />
+            <NavLink href="/dashboard/ai-tools" label="AI Toolkit" icon={Sparkles} collapsed={collapsed} onClick={onClose} />
             {role === "admin" && (
-              <NavLink href="/dashboard/admin" label="Admin Hub" icon={Shield} onClick={onClose} />
+              <NavLink href="/dashboard/admin" label="Admin Hub" icon={Shield} collapsed={collapsed} onClick={onClose} />
             )}
           </div>
         </div>
       </nav>
 
-      {/* Bottom */}
-      <div className="border-t border-white/5 px-4 py-6 space-y-2 bg-black/40 backdrop-blur-xl">
-        <NavLink href="/dashboard/profile" label="ACCOUNT SETTINGS" icon={Settings} onClick={onClose} />
+      <div className={cn("space-y-2 border-t border-white/5 bg-black/40 backdrop-blur-xl", collapsed ? "px-3 py-4" : "px-4 py-6")}>
+        <NavLink href="/dashboard/profile" label="Account Settings" icon={Settings} collapsed={collapsed} onClick={onClose} />
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full rounded-xl px-4 py-3 text-xs font-bold uppercase tracking-[0.15em] text-neutral-500 hover:text-red-400 hover:bg-red-500/5 hover:border-red-500/10 border border-transparent transition-all group"
+          title={collapsed ? "Sign out" : undefined}
+          className={cn(
+            "group w-full rounded-xl border border-transparent py-3 text-xs font-bold uppercase tracking-[0.15em] text-neutral-500 transition-all hover:border-red-500/10 hover:bg-red-500/5 hover:text-red-400",
+            collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-3 px-4",
+          )}
         >
-          <LogOut className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
-          <span>SIGN OUT</span>
+          <LogOut className="h-6 w-6 shrink-0 transition-transform group-hover:translate-x-1" />
+          {!collapsed && <span>Sign Out</span>}
         </button>
       </div>
     </div>
@@ -160,23 +200,45 @@ function SidebarContent({ role, onClose }: { role?: string; onClose?: () => void
 
 export function Sidebar({ role }: SidebarProps) {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
+      } catch {
+        // Ignore storage access issues.
+      }
+      return next;
+    });
+  };
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <aside className="hidden h-screen w-64 shrink-0 flex-col lg:flex">
-        <SidebarContent role={role} />
+      <aside
+        className={cn(
+          "hidden h-screen shrink-0 flex-col transition-all duration-300 lg:flex",
+          collapsed ? "w-24" : "w-72",
+        )}
+      >
+        <SidebarContent role={role} collapsed={collapsed} onToggleCollapse={toggleCollapsed} />
       </aside>
 
-      {/* Mobile trigger */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed left-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-black/50 backdrop-blur-md shadow-sm lg:hidden text-white"
+        className="fixed left-4 top-4 z-40 flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-black/50 text-white shadow-sm backdrop-blur-md lg:hidden"
       >
-        <Menu className="h-5 w-5" />
+        <Menu className="h-6 w-6" />
       </button>
 
-      {/* Mobile drawer backdrop */}
       {open && (
         <div
           className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden"
@@ -184,7 +246,6 @@ export function Sidebar({ role }: SidebarProps) {
         />
       )}
 
-      {/* Mobile drawer */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-72 shadow-2xl transition-transform duration-300 ease-in-out lg:hidden",

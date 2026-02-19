@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Bell, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -17,7 +17,7 @@ interface HeaderProps {
 export function Header({ userName, userEmail, userAvatar }: HeaderProps) {
   const [notifs, setNotifs] = useState<{ id: string; title: string; message: string; read: boolean; type: string; created_at: string }[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     const loadNotifications = async () => {

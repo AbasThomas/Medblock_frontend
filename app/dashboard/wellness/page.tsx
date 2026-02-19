@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   AlertTriangle,
   HeartPulse,
   Loader2,
   Phone,
   Send,
-  Smile,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -51,7 +50,7 @@ export default function WellnessPage() {
   const [loading, setLoading] = useState(false);
   const [chatLoading, setChatLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const scrollToBottom = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -165,8 +164,8 @@ export default function WellnessPage() {
             <HeartPulse className="h-6 w-6 text-[#0A8F6A]" />
           </div>
           <div>
-            <p className="text-lg font-medium tracking-tight text-white">Wellness Resonance</p>
-            <p className="text-xs text-neutral-500 font-light">AI Neural Support · Strategic Confidentiality</p>
+            <p className="text-lg font-medium tracking-tight text-white">Wellness Support</p>
+            <p className="text-xs text-neutral-500 font-light">Private AI-guided check-ins for student wellbeing.</p>
           </div>
           <div className="ml-auto flex items-center gap-2 rounded-full bg-[#0A8F6A]/10 border border-[#0A8F6A]/20 px-3 py-1.5 text-[10px] font-bold text-[#0A8F6A] uppercase tracking-widest shadow-[0_0_10px_rgba(10,143,106,0.1)]">
             <div className="h-1.5 w-1.5 rounded-full bg-[#0A8F6A] animate-pulse" />
@@ -209,10 +208,10 @@ export default function WellnessPage() {
                 <HeartPulse className="h-10 w-10 text-[#0A8F6A] animate-pulse" />
               </div>
               <p className="text-xl font-medium tracking-tight text-white mb-2">
-                Neural Connectivity Established
+                Support Session Ready
               </p>
               <p className="text-sm text-neutral-500 font-light max-w-xs leading-relaxed">
-                Transmit your current emotional frequency for tactical AI analysis and support.
+                Share how you are feeling to receive practical support guidance.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 {QUICK_MESSAGES.map((msg) => (
@@ -285,7 +284,7 @@ export default function WellnessPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(); } }}
-              placeholder="Transmit psychological status..."
+              placeholder="Type how you are feeling..."
               disabled={loading}
               className="flex-1 rounded-xl border border-white/10 bg-black/20 px-5 py-3 text-sm text-white outline-none focus:border-[#0A8F6A]/50 transition-colors placeholder:text-neutral-600 disabled:opacity-60"
             />
@@ -310,7 +309,7 @@ export default function WellnessPage() {
             Priority Support
           </div>
           <p className="text-xs text-neutral-400 font-light leading-relaxed mb-6 relative z-10">
-            If you're in immediate distress, please reach out to these authorized local protocols:
+            If you are in immediate distress, please contact one of these local support services:
           </p>
           <div className="space-y-3 relative z-10">
             {HOTLINES.map(({ name, number }) => (
@@ -329,14 +328,14 @@ export default function WellnessPage() {
  
         {/* Tips */}
         <div className="glass-panel rounded-2xl p-6 border-white/5 shadow-2xl relative">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A] mb-6">Resilience Protocols</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A] mb-6">Wellness Practices</p>
           <div className="space-y-4 text-xs text-neutral-400 font-light leading-relaxed">
             {[
               "Implement 45/5 tactical study intervals.",
-              "Hydrate and execute outdoor grounding.",
-              "Deconstruct objectives into micro-tasks.",
-              "Sync with peers to distribute load.",
-              "Prioritize optimal biological recovery.",
+              "Hydrate and take short movement breaks.",
+              "Break large tasks into small milestones.",
+              "Coordinate with peers on shared coursework.",
+              "Protect your sleep and recovery schedule.",
             ].map((tip) => (
               <div key={tip} className="flex gap-3 items-start">
                 <div className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#0A8F6A] shadow-[0_0_8px_rgba(10,143,106,0.6)]" />
@@ -350,7 +349,7 @@ export default function WellnessPage() {
         <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.01] p-6 text-center">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 mb-2">Secure Channel</p>
           <p className="text-[10px] text-neutral-600 font-light leading-relaxed">
-            End-to-end data isolation active. Conversations are restricted to your local instance.
+            End-to-end data isolation active. Conversations are scoped to your account only.
           </p>
         </div>
       </div>

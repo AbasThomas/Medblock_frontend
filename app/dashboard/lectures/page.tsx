@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Calendar,
   Clock,
@@ -47,7 +47,7 @@ export default function LecturesPage() {
   const [summarizingId, setSummarizingId] = useState<string | null>(null);
   const [summaries, setSummaries] = useState<Record<string, string>>({});
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const loadLectures = useCallback(async () => {
     try {

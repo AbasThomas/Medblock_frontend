@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   BookOpen,
   Download,
@@ -48,6 +48,7 @@ export default function ResourcesPage() {
   const [typeFilter, setTypeFilter] = useState("");
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [uploadForm, setUploadForm] = useState({
     title: "",
@@ -61,7 +62,7 @@ export default function ResourcesPage() {
     is_premium: false,
   });
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const loadResources = useCallback(async () => {
     try {
@@ -92,6 +93,11 @@ export default function ResourcesPage() {
   }, [supabase, loadResources]);
 
   const handleDownload = async (resource: Resource) => {
+    if (!resource.file_url) {
+      toast.error("This resource does not have a downloadable file yet.");
+      return;
+    }
+
     try {
       await incrementDownload(supabase, resource.id);
       window.open(resource.file_url, "_blank");
@@ -106,10 +112,11 @@ export default function ResourcesPage() {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uploadForm.title || !uploadForm.course_code || !uploadForm.department) {
-      toast.error("Please fill in all required fields.");
+    if (!uploadForm.title || !uploadForm.course_code || !uploadForm.department || !selectedFile) {
+      toast.error("Please complete all required fields and attach a file.");
       return;
     }
+
     try {
       setUploading(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -117,22 +124,42 @@ export default function ResourcesPage() {
 
       const { data: profile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
 
+      const extension = selectedFile.name.split(".").pop() ?? "bin";
+      const slug = uploadForm.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40);
+      const path = `${user.id}/${Date.now()}-${slug}.${extension}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("resources")
+        .upload(path, selectedFile, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw new Error(
+          "File upload failed. Confirm the Supabase storage bucket 'resources' exists and is writable.",
+        );
+      }
+
+      const { data: urlData } = supabase.storage.from("resources").getPublicUrl(path);
+
       await createResource(supabase, {
         ...uploadForm,
         uploaded_by: user.id,
         uploader_name: profile?.name ?? user.email?.split("@")[0] ?? "Anonymous",
         tags: uploadForm.tags.split(",").map((t) => t.trim()).filter(Boolean),
-        file_url: "",
-        file_size: 0,
+        file_url: urlData.publicUrl,
+        file_size: selectedFile.size,
       });
 
-      toast.success("Resource submitted for review!");
+      toast.success("Resource submitted for review.");
       setShowUpload(false);
       setUploadForm({
         title: "", description: "", type: "notes", course_code: "",
         university: "University of Lagos", department: "", year: new Date().getFullYear(),
         tags: "", is_premium: false,
       });
+      setSelectedFile(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed.");
     } finally {
@@ -147,7 +174,7 @@ export default function ResourcesPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">Resource Marketplace</h1>
           <p className="mt-1 text-sm text-neutral-400 font-light">
-            Notes, past questions, and tactical study intelligence from your peers.
+            Share and access verified study materials from your institution community.
           </p>
         </div>
         <button
@@ -182,7 +209,7 @@ export default function ResourcesPage() {
             onChange={(e) => setTypeFilter(e.target.value)}
             className="bg-transparent text-sm outline-none text-neutral-400 cursor-pointer"
           >
-            <option value="" className="bg-neutral-900">All Protocol Types</option>
+            <option value="" className="bg-neutral-900">All Resource Types</option>
             {RESOURCE_TYPES.map((t) => (
               <option key={t} value={t} className="bg-neutral-900">{t.replace("-", " ").toUpperCase()}</option>
             ))}
@@ -273,13 +300,13 @@ export default function ResourcesPage() {
                 disabled={resource.is_premium}
                 className={cn(
                   "mt-6 flex w-full items-center justify-center gap-2 rounded-lg py-3 text-xs font-bold uppercase tracking-widest transition-all shadow-lg",
-                  resource.is_premium
+                resource.is_premium
                     ? "bg-white/5 border border-white/10 text-neutral-600 cursor-not-allowed shadow-none"
                     : "bg-[#0A8F6A] text-white hover:opacity-90 shadow-emerald-500/20",
                 )}
               >
                 <Download className="h-3.5 w-3.5" />
-                {resource.is_premium ? "Upgrade Required" : "Initialize Download"}
+                {resource.is_premium ? "Upgrade Required" : "Download Resource"}
               </button>
             </div>
           ))}
@@ -292,7 +319,13 @@ export default function ResourcesPage() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Upload Resource</h2>
-              <button onClick={() => setShowUpload(false)} className="rounded-lg p-1 hover:bg-muted">
+              <button
+                onClick={() => {
+                  setShowUpload(false);
+                  setSelectedFile(null);
+                }}
+                className="rounded-lg p-1 hover:bg-muted"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -301,6 +334,22 @@ export default function ResourcesPage() {
             </p>
 
             <form onSubmit={(e) => void handleUpload(e)} className="mt-4 space-y-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">File *</label>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip"
+                  onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
+                  className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none ring-primary/50 focus:ring-2"
+                  required
+                />
+                {selectedFile && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {selectedFile.name} ({formatFileSize(selectedFile.size)})
+                  </p>
+                )}
+              </div>
+
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Title *</label>
                 <input
@@ -370,7 +419,10 @@ export default function ResourcesPage() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowUpload(false)}
+                  onClick={() => {
+                    setShowUpload(false);
+                    setSelectedFile(null);
+                  }}
                   className="flex-1 rounded-xl border py-2.5 text-sm font-medium hover:bg-muted"
                 >
                   Cancel

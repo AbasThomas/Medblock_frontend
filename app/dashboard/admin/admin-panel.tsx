@@ -117,6 +117,15 @@ export function AdminPanel({ stats, pendingResources: initialPending, users }: A
     { id: "users" as const, label: "USER DIRECTORY", icon: Users },
   ];
 
+  const approvalRate =
+    stats.totalResources > 0
+      ? `${Math.round(((stats.totalResources - stats.pendingApprovals) / stats.totalResources) * 100)}%`
+      : "N/A";
+  const resourcesPerUser =
+    stats.totalUsers > 0 ? (stats.totalResources / stats.totalUsers).toFixed(2) : "0.00";
+  const pendingRatio =
+    stats.totalResources > 0 ? `${Math.round((stats.pendingApprovals / stats.totalResources) * 100)}%` : "0%";
+
   return (
     <div className="space-y-8 animate-fade-in pb-12">
       <div className="flex items-center gap-4">
@@ -155,7 +164,7 @@ export function AdminPanel({ stats, pendingResources: initialPending, users }: A
             <StatCard label="Live Resources" value={stats.totalResources} icon={BookOpen} color="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" />
             <StatCard label="Active Lectures" value={stats.totalLectures} icon={Video} color="bg-purple-500/10 text-purple-400 border border-purple-500/20" />
             <StatCard label="Opportunities" value={stats.totalOpportunities} icon={Trophy} color="bg-orange-500/10 text-orange-400 border border-orange-500/20" />
-            <StatCard label="Pending Area" value={stats.pendingApprovals} icon={Shield} color="bg-red-500/10 text-red-400 border border-red-500/20" />
+            <StatCard label="Pending Queue" value={stats.pendingApprovals} icon={Shield} color="bg-red-500/10 text-red-400 border border-red-500/20" />
           </div>
 
           {stats.pendingApprovals > 0 && (
@@ -180,9 +189,9 @@ export function AdminPanel({ stats, pendingResources: initialPending, users }: A
             <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A] mb-6">Platform Analytics</h2>
             <div className="grid gap-6 sm:grid-cols-3">
               {[
-                { label: "Approval Rate", value: stats.totalResources > 0 ? `${Math.round(((stats.totalResources - stats.pendingApprovals) / stats.totalResources) * 100)}%` : "N/A" },
-                { label: "User Engagement", value: "88.4%" },
-                { label: "Active Opps", value: stats.totalOpportunities },
+                { label: "Approval Rate", value: approvalRate },
+                { label: "Resources per User", value: resourcesPerUser },
+                { label: "Pending Ratio", value: pendingRatio },
               ].map(({ label, value }) => (
                 <div key={label} className="rounded-2xl bg-white/[0.02] border border-white/5 p-6 text-center shadow-xl">
                   <p className="text-3xl font-bold text-white tracking-tighter mb-1">{value}</p>
@@ -219,7 +228,7 @@ export function AdminPanel({ stats, pendingResources: initialPending, users }: A
                         <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">BY {resource.uploader_name}</span>
                       </div>
                       {resource.description && (
-                        <p className="text-xs text-neutral-500 font-light mb-4 line-clamp-2 max-w-xl italic">"{resource.description}"</p>
+                        <p className="text-xs text-neutral-500 font-light mb-4 line-clamp-2 max-w-xl italic">&ldquo;{resource.description}&rdquo;</p>
                       )}
                       <p className="text-[10px] text-neutral-600 font-bold uppercase tracking-widest">SUBMITTED {timeAgo(resource.created_at)}</p>
                     </div>

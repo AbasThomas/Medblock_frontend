@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getLectures, getResources, getOpportunities } from "@/lib/supabase/queries";
-import { formatNaira, formatDateTime, timeAgo, getResourceTypeColor, getOpportunityTypeColor } from "@/lib/utils";
+import { formatNaira, formatDateTime, timeAgo } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
@@ -20,13 +20,11 @@ function StatCard({
   value,
   sub,
   icon: Icon,
-  color,
 }: {
   label: string;
   value: string | number;
   sub?: string;
   icon: React.ElementType;
-  color: string;
 }) {
   return (
     <div className="glass-panel p-6 rounded-2xl group border-[#0A8F6A]/5 hover:border-[#0A8F6A]/30 transition-all duration-500 relative overflow-hidden shadow-2xl">
@@ -136,28 +134,24 @@ export default async function DashboardPage() {
           value={lectures.length}
           sub={`${liveLectures.length} live now`}
           icon={Video}
-          color="bg-transparent"
         />
         <StatCard
           label="Resources Available"
           value={resources.length}
           sub="Browse marketplace"
           icon={BookOpen}
-          color="bg-transparent"
         />
         <StatCard
           label="Opportunities"
           value={opportunities.length}
           sub="Open applications"
           icon={Trophy}
-          color="bg-transparent"
         />
         <StatCard
           label="Points Earned"
           value={profile.points ?? 0}
           sub="Gamification score"
           icon={HeartPulse}
-          color="bg-transparent"
         />
       </div>
 

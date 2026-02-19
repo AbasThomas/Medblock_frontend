@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   ArrowUpRight,
   Clock,
@@ -49,16 +49,15 @@ export default function OpportunitiesPage() {
   const [matchLoading, setMatchLoading] = useState(false);
   const [matchMode, setMatchMode] = useState(false);
 
-  // Profile for AI matching
   const [profile, setProfile] = useState({
-    skills: "react, typescript, research writing",
-    interests: "internship, scholarship",
-    location: "Lagos",
-    gpa: "3.8",
+    skills: "",
+    interests: "",
+    location: "",
+    gpa: "",
   });
   const [showMatchPanel, setShowMatchPanel] = useState(false);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const loadOpportunities = useCallback(async () => {
     try {
@@ -86,6 +85,33 @@ export default function OpportunitiesPage() {
     const timer = setTimeout(() => void loadOpportunities(), 300);
     return () => clearTimeout(timer);
   }, [loadOpportunities]);
+
+  useEffect(() => {
+    const loadProfileDefaults = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("department, university")
+        .eq("id", user.id)
+        .single();
+
+      const department = data?.department ?? "";
+      const university = data?.university ?? "";
+
+      setProfile((prev) => ({
+        ...prev,
+        skills: prev.skills || (department ? `${department.toLowerCase()}, communication` : ""),
+        interests: prev.interests || "scholarship, internship",
+        location: prev.location || university || "Lagos",
+      }));
+    };
+
+    void loadProfileDefaults();
+  }, [supabase]);
 
   const handleAiMatch = async () => {
     try {
@@ -159,14 +185,14 @@ export default function OpportunitiesPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">Strategic Opportunities</h1>
           <p className="mt-1 text-sm text-neutral-400 font-light">
-            Scholarships, bursaries, internships & gigs matched to your intelligence profile.
+            Scholarships, bursaries, internships, and gigs matched to your profile.
           </p>
         </div>
         <button
           onClick={() => setShowMatchPanel(true)}
           className="inline-flex items-center gap-2 rounded-lg bg-[#0A8F6A] px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:opacity-90 shadow-lg shadow-emerald-500/20 transition-all"
         >
-          <Sparkles className="h-4 w-4" /> Initialize AI Match
+          <Sparkles className="h-4 w-4" /> Run AI Matching
         </button>
       </div>
 
@@ -177,7 +203,7 @@ export default function OpportunitiesPage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search intel..."
+            placeholder="Search opportunities..."
             className="w-44 bg-transparent text-sm outline-none text-neutral-200 placeholder:text-neutral-500"
           />
           {search && <button onClick={() => setSearch("")}><X className="h-3.5 w-3.5 text-neutral-500 hover:text-white" /></button>}
@@ -190,7 +216,7 @@ export default function OpportunitiesPage() {
             onChange={(e) => setTypeFilter(e.target.value)}
             className="bg-transparent text-sm outline-none text-neutral-400 cursor-pointer"
           >
-            <option value="" className="bg-neutral-900">All Protocol Types</option>
+            <option value="" className="bg-neutral-900">All Opportunity Types</option>
             {OPP_TYPES.map((t) => <option key={t} value={t} className="bg-neutral-900">{t.toUpperCase()}</option>)}
           </select>
         </div>
@@ -202,7 +228,7 @@ export default function OpportunitiesPage() {
             remoteOnly ? "border-[#0A8F6A] bg-[#0A8F6A] text-white shadow-[0_0_15px_rgba(10,143,106,0.3)]" : "bg-black/20 border-white/10 text-neutral-500 hover:text-white hover:border-white/20",
           )}
         >
-          <Wifi className="h-4 w-4" /> Remote Access
+          <Wifi className="h-4 w-4" /> Remote Only
         </button>
 
         {matchMode && (
@@ -218,7 +244,7 @@ export default function OpportunitiesPage() {
       {matchMode && (
         <div className="flex items-center gap-2 rounded-xl border border-[#0A8F6A]/30 bg-[#0A8F6A]/5 px-4 py-3 text-sm text-[#0A8F6A] font-light">
           <Sparkles className="h-4 w-4 shadow-[0_0_10px_rgba(10,143,106,0.3)]" />
-          Protocols ranked by AI neural matching based on your intelligence profile.
+          Opportunities ranked by AI fit analysis based on your profile.
         </div>
       )}
 
@@ -257,7 +283,7 @@ export default function OpportunitiesPage() {
                   )}
                   {opp.matchReason && (
                     <div className="mt-4 rounded-lg bg-[#0A8F6A]/5 border border-[#0A8F6A]/10 p-3 italic text-[11px] text-neutral-400 font-light">
-                      <span className="text-[#0A8F6A] font-bold not-italic">AI Logic:</span> {opp.matchReason}
+                      <span className="text-[#0A8F6A] font-bold not-italic">AI Rationale:</span> {opp.matchReason}
                     </div>
                   )}
                 </div>
@@ -269,11 +295,11 @@ export default function OpportunitiesPage() {
                 <div className="mt-6 flex flex-wrap gap-4 text-[10px] font-bold uppercase tracking-widest text-neutral-500 pt-6 border-t border-white/5">
                   <span className="flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5 text-[#0A8F6A]" /> {opp.location}
-                    {opp.is_remote && " · Remote Access"}
+                    {opp.is_remote && " • Remote"}
                   </span>
                   <span className={cn("flex items-center gap-1.5", days <= 7 && "text-red-500")}>
                     <Clock className="h-3.5 w-3.5 text-[#0A8F6A]" />
-                    {days > 0 ? `${days}D REMAINING` : "PROTOCOL EXPIRED"}
+                    {days > 0 ? `${days} days remaining` : "Closed"}
                   </span>
                 </div>
 
@@ -293,7 +319,7 @@ export default function OpportunitiesPage() {
                   rel="noopener noreferrer"
                   className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#0A8F6A] py-3 text-xs font-bold uppercase tracking-widest text-white hover:opacity-90 transition-all shadow-lg shadow-emerald-500/20"
                 >
-                  Initiate Application <ArrowUpRight className="h-4 w-4" />
+                  Apply Now <ArrowUpRight className="h-4 w-4" />
                 </a>
               </div>
             );
@@ -309,14 +335,14 @@ export default function OpportunitiesPage() {
             <div className="flex items-center justify-between relative z-10 mb-6">
               <div className="flex items-center gap-3">
                 <Sparkles className="h-6 w-6 text-[#0A8F6A]" />
-                <h2 className="text-xl font-medium tracking-tight text-white">Neural Match Sync</h2>
+                <h2 className="text-xl font-medium tracking-tight text-white">AI Match Setup</h2>
               </div>
               <button onClick={() => setShowMatchPanel(false)} className="rounded-full p-2 bg-white/5 border border-white/5 text-neutral-500 hover:text-white transition-all">
                 <X className="h-4 w-4" />
               </button>
             </div>
             <p className="text-xs text-neutral-400 font-light leading-relaxed mb-8 relative z-10">
-              Synchronize your academic profile with global opportunity databases using AI vector embeddings.
+              Provide your academic and career profile to rank opportunities by relevance.
             </p>
 
             <div className="space-y-5 relative z-10">
@@ -324,7 +350,7 @@ export default function OpportunitiesPage() {
                 { label: "SKILLS (CSV)", key: "skills", placeholder: "react, python, research writing" },
                 { label: "INTERESTS (CSV)", key: "interests", placeholder: "scholarship, internship, tutoring" },
                 { label: "LOCATION", key: "location", placeholder: "Lagos" },
-                { label: "CGPA INDICATOR", key: "gpa", placeholder: "3.8" },
+                { label: "CGPA", key: "gpa", placeholder: "3.8" },
               ].map(({ label, key, placeholder }) => (
                 <div key={key}>
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">{label}</label>
@@ -351,7 +377,7 @@ export default function OpportunitiesPage() {
                 className="flex-[2] items-center justify-center gap-3 rounded-xl bg-[#0A8F6A] py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-60 flex"
               >
                 {matchLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {matchLoading ? "Synchronizing..." : "Initialize Rank"}
+                {matchLoading ? "Ranking..." : "Rank Opportunities"}
               </button>
             </div>
           </div>
