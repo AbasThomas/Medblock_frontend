@@ -131,11 +131,11 @@ function SidebarContent({ role, onClose }: { role?: string; onClose?: () => void
         </div>
 
         <div className="mt-8">
-          <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
-            Tools
+          <p className="mb-4 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A]">
+            AI SERVICES
           </p>
           <div className="space-y-1">
-            <NavLink href="/dashboard/ai-tools" label="AI Tools" icon={Sparkles} onClick={onClose} />
+            <NavLink href="/dashboard/ai-tools" label="AI Toolkit" icon={Sparkles} onClick={onClose} />
             {role === "admin" && (
               <NavLink href="/dashboard/admin" label="Admin Hub" icon={Shield} onClick={onClose} />
             )}
@@ -144,14 +144,14 @@ function SidebarContent({ role, onClose }: { role?: string; onClose?: () => void
       </nav>
 
       {/* Bottom */}
-      <div className="border-t border-white/5 px-4 py-4 space-y-1 bg-black/20">
-        <NavLink href="/dashboard/profile" label="Settings" icon={Settings} onClick={onClose} />
+      <div className="border-t border-white/5 px-4 py-6 space-y-2 bg-black/40 backdrop-blur-xl">
+        <NavLink href="/dashboard/profile" label="ACCOUNT SETTINGS" icon={Settings} onClick={onClose} />
         <button
           onClick={handleLogout}
-          className="nav-link w-full text-left text-neutral-400 hover:bg-white/5 hover:text-white border border-transparent group"
+          className="flex items-center gap-3 w-full rounded-xl px-4 py-3 text-xs font-bold uppercase tracking-[0.15em] text-neutral-500 hover:text-red-400 hover:bg-red-500/5 hover:border-red-500/10 border border-transparent transition-all group"
         >
-          <LogOut className="h-4 w-4 shrink-0 group-hover:text-white" />
-          Log out
+          <LogOut className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
+          <span>SIGN OUT</span>
         </button>
       </div>
     </div>

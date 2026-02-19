@@ -112,9 +112,9 @@ export function AdminPanel({ stats, pendingResources: initialPending, users }: A
   };
 
   const TABS = [
-    { id: "overview" as const, label: "PLATFORM METRICS", icon: LayoutDashboard },
+    { id: "overview" as const, label: "PLATFORM OVERVIEW", icon: LayoutDashboard },
     { id: "resources" as const, label: `PENDING APPROVALS (${pending.length})`, icon: BookOpen },
-    { id: "users" as const, label: "ENTITY DIRECTORY", icon: Users },
+    { id: "users" as const, label: "USER DIRECTORY", icon: Users },
   ];
 
   return (
@@ -124,8 +124,8 @@ export function AdminPanel({ stats, pendingResources: initialPending, users }: A
           <Shield className="h-6 w-6 text-[#0A8F6A]" />
         </div>
         <div>
-          <h1 className="text-2xl font-medium tracking-tight text-white mb-0.5">Imperial Console</h1>
-          <p className="text-sm text-neutral-500 font-light">Orchestrate platform entities, protocols, and data streams.</p>
+          <h1 className="text-2xl font-medium tracking-tight text-white mb-0.5">Admin Dashboard</h1>
+          <p className="text-sm text-neutral-500 font-light">Manage platform users, resources, and system data.</p>
         </div>
       </div>
 
@@ -151,38 +151,38 @@ export function AdminPanel({ stats, pendingResources: initialPending, users }: A
       {tab === "overview" && (
         <div className="space-y-8">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
-            <StatCard label="Total Entities" value={stats.totalUsers} icon={Users} color="bg-blue-500/10 text-blue-400 border border-blue-500/20" />
-            <StatCard label="Live Repos" value={stats.totalResources} icon={BookOpen} color="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" />
-            <StatCard label="Active Uplinks" value={stats.totalLectures} icon={Video} color="bg-purple-500/10 text-purple-400 border border-purple-500/20" />
-            <StatCard label="Quest Tokens" value={stats.totalOpportunities} icon={Trophy} color="bg-orange-500/10 text-orange-400 border border-orange-500/20" />
-            <StatCard label="Neutral Zone" value={stats.pendingApprovals} icon={Shield} color="bg-red-500/10 text-red-400 border border-red-500/20" />
+            <StatCard label="Total Users" value={stats.totalUsers} icon={Users} color="bg-blue-500/10 text-blue-400 border border-blue-500/20" />
+            <StatCard label="Live Resources" value={stats.totalResources} icon={BookOpen} color="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" />
+            <StatCard label="Active Lectures" value={stats.totalLectures} icon={Video} color="bg-purple-500/10 text-purple-400 border border-purple-500/20" />
+            <StatCard label="Opportunities" value={stats.totalOpportunities} icon={Trophy} color="bg-orange-500/10 text-orange-400 border border-orange-500/20" />
+            <StatCard label="Pending Area" value={stats.pendingApprovals} icon={Shield} color="bg-red-500/10 text-red-400 border border-red-500/20" />
           </div>
 
           {stats.pendingApprovals > 0 && (
             <div className="rounded-2xl border border-[#0A8F6A]/30 bg-[#0A8F6A]/5 p-6 backdrop-blur-sm relative overflow-hidden group">
               <div className="absolute -right-8 -top-8 h-32 w-32 bg-[#0A8F6A]/10 rounded-full blur-3xl group-hover:bg-[#0A8F6A]/20 transition-all duration-700"></div>
               <p className="text-lg font-medium text-white mb-1">
-                {stats.pendingApprovals} PROTOCOL{stats.pendingApprovals !== 1 ? "S" : ""} AWAITING AUTHORIZATION
+                {stats.pendingApprovals} RESOURCE{stats.pendingApprovals !== 1 ? "S" : ""} AWAITING APPROVAL
               </p>
               <p className="text-sm text-neutral-500 font-light">
-                New data packets require verification before being integrated into the main repository.
+                New uploads require verification before being published to the marketplace.
               </p>
               <button
                 onClick={() => setTab("resources")}
                 className="mt-4 rounded-xl bg-[#0A8F6A] px-6 py-2.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20 hover:opacity-90 transition-all"
               >
-                Execute Review
+                Review Pending
               </button>
             </div>
           )}
 
           <div className="glass-panel border-white/5 p-8 rounded-3xl shadow-2xl">
-            <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A] mb-6">System Integrity Analysis</h2>
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A] mb-6">Platform Analytics</h2>
             <div className="grid gap-6 sm:grid-cols-3">
               {[
-                { label: "Stability Index", value: stats.totalResources > 0 ? `${Math.round(((stats.totalResources - stats.pendingApprovals) / stats.totalResources) * 100)}%` : "N/A" },
-                { label: "Engagement Uplink", value: "88.4%" },
-                { label: "Active Quests", value: stats.totalOpportunities },
+                { label: "Approval Rate", value: stats.totalResources > 0 ? `${Math.round(((stats.totalResources - stats.pendingApprovals) / stats.totalResources) * 100)}%` : "N/A" },
+                { label: "User Engagement", value: "88.4%" },
+                { label: "Active Opps", value: stats.totalOpportunities },
               ].map(({ label, value }) => (
                 <div key={label} className="rounded-2xl bg-white/[0.02] border border-white/5 p-6 text-center shadow-xl">
                   <p className="text-3xl font-bold text-white tracking-tighter mb-1">{value}</p>
@@ -200,8 +200,8 @@ export function AdminPanel({ stats, pendingResources: initialPending, users }: A
           {pending.length === 0 ? (
             <div className="rounded-3xl border-2 border-dashed border-white/5 py-24 text-center bg-white/[0.01]">
               <CheckCircle2 className="mx-auto h-16 w-16 text-[#0A8F6A]/20" />
-              <p className="mt-6 text-lg font-medium text-white">SYSTEMS CLEAR</p>
-              <p className="mt-2 text-sm text-neutral-500 font-light">No data packets currently awaiting verification.</p>
+              <p className="mt-6 text-lg font-medium text-white">ALL CLEAR</p>
+              <p className="mt-2 text-sm text-neutral-500 font-light">No resources currently awaiting approval.</p>
             </div>
           ) : (
             pending.map((resource) => (
@@ -236,7 +236,7 @@ export function AdminPanel({ stats, pendingResources: initialPending, users }: A
                       ) : (
                         <CheckCircle2 className="h-3.5 w-3.5" />
                       )}
-                      Authorize
+                      Approve
                     </button>
                     <button
                       onClick={() => void handleReject(resource.id)}
@@ -248,7 +248,7 @@ export function AdminPanel({ stats, pendingResources: initialPending, users }: A
                       ) : (
                         <Trash2 className="h-3.5 w-3.5" />
                       )}
-                      Purge
+                      Reject
                     </button>
                   </div>
                 </div>
@@ -262,13 +262,13 @@ export function AdminPanel({ stats, pendingResources: initialPending, users }: A
       {tab === "users" && (
         <div className="glass-panel border-white/5 rounded-3xl shadow-2xl overflow-hidden">
           <div className="border-b border-white/5 px-8 py-6 bg-white/[0.02]">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A]">{users.length} ENTITIES REGISTERED</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A]">{users.length} USERS REGISTERED</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="border-b border-white/5 bg-white/[0.02]">
                 <tr>
-                  {["ENTITY NAME", "IDENTIFIER", "AUTHORITY", "NODE PLAN", "INSTITUTION", "INTEL", "SYNCED"].map((h) => (
+                  {["USER NAME", "EMAIL ADDRESS", "ACCOUNT ROLE", "PLAN TYPE", "INSTITUTION", "POINTS", "JOINED"].map((h) => (
                     <th key={h} className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-neutral-500">
                       {h}
                     </th>
@@ -299,7 +299,7 @@ export function AdminPanel({ stats, pendingResources: initialPending, users }: A
               </tbody>
             </table>
             {users.length === 0 && (
-              <div className="py-24 text-center text-sm text-neutral-600 font-light">NO ENTITIES DETECTED IN THIS DOMAIN.</div>
+              <div className="py-24 text-center text-sm text-neutral-600 font-light">NO USERS FOUND.</div>
             )}
           </div>
         </div>

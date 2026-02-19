@@ -123,7 +123,7 @@ export default function ProfilePage() {
                 </button>
               </div>
               <div className="mb-2">
-                <p className="text-2xl font-medium tracking-tight text-white mb-0.5">{profile?.name || "Neural Entity"}</p>
+                <p className="text-2xl font-medium tracking-tight text-white mb-0.5">{profile?.name || "Student Profile"}</p>
                 <p className="text-sm text-neutral-500 font-light">{profile?.email}</p>
               </div>
             </div>
@@ -145,16 +145,16 @@ export default function ProfilePage() {
               ) : (
                 <Edit3 className="h-4 w-4" />
               )}
-              {saving ? "Syncing..." : editing ? "Authorize Changes" : "Modify Protocol"}
+              {saving ? "Saving..." : editing ? "Save Changes" : "Edit Profile"}
             </button>
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <span className="rounded-full bg-white/5 border border-white/5 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-neutral-500">
-              {profile?.role ?? "standard-entity"}
+              {profile?.role ?? "Student"}
             </span>
             <span className="rounded-full bg-[#0A8F6A]/10 border border-[#0A8F6A]/20 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#0A8F6A] shadow-[0_0_15px_rgba(10,143,106,0.1)]">
-              {profile?.plan ?? "basic"} node
+              {profile?.plan ?? "Standard"} Plan
             </span>
             {profile?.university && (
               <span className="rounded-full bg-white/5 border border-white/5 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-neutral-500">
@@ -168,14 +168,14 @@ export default function ProfilePage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Personal info form */}
         <div className="lg:col-span-2 space-y-8 rounded-3xl border border-white/5 bg-black/40 p-8 shadow-2xl backdrop-blur-md">
-          <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A]">Intelductory Matrix</h2>
+          <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A]">Profile Information</h2>
 
           <div className="grid gap-6 sm:grid-cols-2">
             {[
-              { label: "FULL DESIGNATION", key: "name", placeholder: "Tunde Adesanya" },
+              { label: "FULL NAME", key: "name", placeholder: "Tunde Adesanya" },
               { label: "INSTITUTION", key: "university", placeholder: "University of Lagos" },
-              { label: "CORE DISCIPLINE", key: "department", placeholder: "Computer Science" },
-              { label: "PROTOCOL IDENTIFIER", key: "matric_number", placeholder: "190404001" },
+              { label: "DEPARTMENT", key: "department", placeholder: "Computer Science" },
+              { label: "MATRIC NUMBER", key: "matric_number", placeholder: "190404001" },
             ].map(({ label, key, placeholder }) => (
               <div key={key}>
                 <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-neutral-500">{label}</label>
@@ -218,7 +218,7 @@ export default function ProfilePage() {
                 onClick={() => setEditing(false)}
                 className="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-white transition-all"
               >
-                Abort
+                Cancel
               </button>
               <button
                 onClick={() => void handleSave()}
@@ -226,7 +226,7 @@ export default function ProfilePage() {
                 className="flex-[2] flex items-center justify-center gap-3 rounded-xl bg-[#0A8F6A] py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20 disabled:opacity-60"
               >
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Authorize Changes
+                Save Profile
               </button>
             </div>
           )}
@@ -237,11 +237,11 @@ export default function ProfilePage() {
           {/* Points */}
           <div className="glass-panel border-white/5 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-[#0A8F6A]/5 to-transparent pointer-events-none"></div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A] mb-4">Neural Recognition</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A] mb-4">Academic Rewards</p>
             <div className="flex items-center justify-between mb-6">
               <div>
                 <p className="text-4xl font-bold text-white tracking-tighter">{profile?.points ?? 0}</p>
-                <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest mt-1">Total Intel Accumulated</p>
+                <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest mt-1">Total Points Earned</p>
               </div>
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0A8F6A]/10 border border-[#0A8F6A]/20 shadow-[0_0_20px_rgba(10,143,106,0.2)]">
                 <Award className="h-7 w-7 text-[#0A8F6A]" />
@@ -254,15 +254,15 @@ export default function ProfilePage() {
               />
             </div>
             <p className="mt-3 text-[10px] text-neutral-500 font-light flex justify-between">
-              <span>Next Level Threshold: 1,000</span>
-              <span className="font-bold text-[#0A8F6A]">{Math.max(0, 1000 - (profile?.points ?? 0))} TO SYNC</span>
+              <span>Next Level Goal: 1,000</span>
+              <span className="font-bold text-[#0A8F6A]">{Math.max(0, 1000 - (profile?.points ?? 0))} TO GO</span>
             </p>
           </div>
 
           {/* Plan */}
           <div className="glass-panel border-white/5 rounded-2xl p-6 shadow-2xl relative">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-500 mb-4">Access Protocol</p>
-            <p className="text-2xl font-medium tracking-tight text-white capitalize mb-1">{profile?.plan ?? "basic"} Node</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-500 mb-4">Subscription Plan</p>
+            <p className="text-2xl font-medium tracking-tight text-white capitalize mb-1">{profile?.plan ?? "Standard"} Plan</p>
             <p className="text-xs text-neutral-500 font-light mb-6">{planInfo?.price}</p>
             <ul className="space-y-3 mb-8">
               {(planInfo?.highlights ?? []).map((f) => (
@@ -282,9 +282,9 @@ export default function ProfilePage() {
 
       {/* Badges */}
       <div className="glass-panel border-white/5 rounded-3xl p-8 shadow-2xl relative">
-        <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A] mb-2">Merit Credentials</h2>
+        <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A] mb-2">Achievements & Badges</h2>
         <p className="text-sm text-neutral-500 font-light mb-8">
-          Unlock tactical credentials by executing core UniBridge protocols.
+          Unlock rewards by completing core UniBridge activities.
         </p>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {BADGES.map(({ id, name, icon, desc }) => (

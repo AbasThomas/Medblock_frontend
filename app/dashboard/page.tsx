@@ -29,14 +29,17 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="glass-panel p-5 rounded-2xl group hover:border-emerald-600/30 transition-all duration-300">
-      <div className="flex items-start justify-between">
+    <div className="glass-panel p-6 rounded-2xl group border-[#0A8F6A]/5 hover:border-[#0A8F6A]/30 transition-all duration-500 relative overflow-hidden shadow-2xl">
+      <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-[#0A8F6A]/50 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-700"></div>
+      <div className="absolute -right-4 -top-4 w-16 h-16 bg-[#0A8F6A]/5 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+      <div className="flex items-start justify-between relative z-10">
         <div>
-          <p className="text-sm text-neutral-400 group-hover:text-emerald-500/80 transition-colors">{label}</p>
-          <p className="mt-1 text-2xl font-bold text-white group-hover:text-emerald-400 transition-colors">{value}</p>
-          {sub && <p className="mt-0.5 text-xs text-neutral-500">{sub}</p>}
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 mb-2 group-hover:text-white transition-colors">{label}</p>
+          <p className="text-3xl font-bold text-white tracking-tighter group-hover:text-[#0A8F6A] transition-colors">{value}</p>
+          {sub && <p className="mt-1 text-[10px] text-[#0A8F6A] font-bold uppercase tracking-widest opacity-80">{sub}</p>}
         </div>
-        <div className={cn("rounded-xl p-2.5 bg-white/5 border border-white/5 text-white group-hover:scale-110 transition-transform duration-300")}>
+        <div className={cn("rounded-2xl p-3 bg-white/[0.02] border border-white/10 text-white shadow-xl group-hover:scale-110 group-hover:bg-[#0A8F6A] group-hover:border-[#0A8F6A] transition-all duration-500")}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
@@ -90,28 +93,37 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6 animate-reveal">
       {/* Welcome banner */}
-      <div className="rounded-2xl bg-hero-gradient p-6 text-white relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-emerald-600/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-        <div className="relative z-10">
-          <p className="text-sm text-emerald-100/70">Good day 👋</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">Welcome back, {displayName}</h1>
-          <p className="mt-1 text-sm text-emerald-100/80">
-            {profile.university ?? "University of Lagos"} ·{" "}
-            <span className="capitalize">{profile.role ?? "student"}</span> ·{" "}
-            <span className="capitalize">{profile.plan ?? "basic"} plan</span>
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+      <div className="rounded-3xl bg-hero-gradient p-10 text-white relative overflow-hidden group shadow-2xl border border-white/5">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-600/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none group-hover:bg-emerald-600/20 transition-all duration-1000"></div>
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-[#0A8F6A]/5 rounded-full blur-[80px] pointer-events-none group-hover:opacity-100 transition-opacity"></div>
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <div className="space-y-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#0A8F6A] mb-4">Academic Overview</p>
+            <h1 className="text-4xl md:text-5xl font-medium tracking-tighter">Welcome back, {displayName}</h1>
+            <p className="text-sm text-neutral-400 font-light max-w-xl">
+              <span className="text-[#0A8F6A] font-bold">Institution:</span> {profile.university ?? "University of Lagos"} ·{" "}
+              <span className="uppercase text-[9px] font-bold tracking-widest bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">{profile.role ?? "Student"}</span> ·{" "}
+              <span className="uppercase text-[9px] font-bold tracking-widest text-[#0A8F6A] bg-[#0A8F6A]/10 border border-[#0A8F6A]/20 px-2 py-0.5 rounded-md">{profile.plan ?? "Standard"} Plan</span>
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-4">
             <Link
               href="/dashboard/lectures"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 border border-white/20 px-4 py-2 text-xs font-medium hover:bg-white/20 hover:border-white/30 transition-all backdrop-blur-sm"
+              className="group/btn relative inline-flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-6 py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-white/10 transition-all backdrop-blur-md overflow-hidden"
             >
-              <Video className="h-3.5 w-3.5" /> View Lectures
+              <div className="absolute inset-0 bg-[#0A8F6A]/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
+              <Video className="h-4 w-4 relative z-10 text-[#0A8F6A]" />
+              <span className="relative z-10">My Lectures</span>
             </Link>
             <Link
               href="/dashboard/opportunities"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-900/40 border border-emerald-500/30 px-4 py-2 text-xs font-medium hover:bg-emerald-900/60 hover:border-emerald-500/50 transition-all backdrop-blur-sm text-emerald-100"
+              className="group/btn relative inline-flex items-center gap-2 rounded-xl bg-[#0A8F6A] px-6 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20 hover:opacity-90 transition-all overflow-hidden"
             >
-              <Trophy className="h-3.5 w-3.5" /> Find Opportunities
+              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
+              <Trophy className="h-4 w-4 relative z-10" />
+              <span className="relative z-10">Opportunities</span>
             </Link>
           </div>
         </div>

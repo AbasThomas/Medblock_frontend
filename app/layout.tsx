@@ -31,11 +31,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth bg-black">
       <body
-        className={`${inter.variable} ${montserrat.variable} font-sans antialiased text-neutral-300 relative selection:bg-emerald-600 selection:text-white overflow-x-hidden`}
+        className={`${inter.variable} ${montserrat.variable} font-sans antialiased text-neutral-300 relative isolate selection:bg-emerald-600 selection:text-white overflow-x-hidden`}
       >
-        <UnicornBackground />
-        <AmbientBackground />
-        {children}
+        <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+          <UnicornBackground />
+          <AmbientBackground />
+        </div>
+        <div className="relative z-10">{children}</div>
         <AppToaster />
       </body>
     </html>
