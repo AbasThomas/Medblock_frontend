@@ -248,8 +248,8 @@ export function UniBridgeDashboard() {
     : "bg-amber-500/15 text-amber-700 border-amber-300";
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,hsl(158_72%_95%),hsl(0_0%_99%))]">
-      <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-8 md:py-12">
+    <div>
+      <div className="mx-auto w-full max-w-7xl">
         <section className="overflow-hidden rounded-3xl border border-white/80 bg-hero-gradient p-6 text-white shadow-xl md:p-10">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -548,6 +548,6 @@ export function UniBridgeDashboard() {
           </article>
         </section>
       </div>
-    </main>
+    </div>
   );
 }

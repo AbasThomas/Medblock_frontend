@@ -1,0 +1,344 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Eye, EyeOff, Loader2, Zap } from "lucide-react";
+import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+
+const UNIVERSITIES = [
+  "University of Lagos (UNILAG)",
+  "Obafemi Awolowo University (OAU)",
+  "University of Ibadan (UI)",
+  "Ahmadu Bello University (ABU)",
+  "University of Nigeria Nsukka (UNN)",
+  "University of Benin (UNIBEN)",
+  "Lagos State University (LASU)",
+  "University of Port Harcourt (UNIPORT)",
+  "Bayero University Kano (BUK)",
+  "Federal University of Technology Akure (FUTA)",
+  "Other",
+];
+
+const DEPARTMENTS = [
+  "Computer Science",
+  "Engineering",
+  "Medicine",
+  "Law",
+  "Economics",
+  "Social Sciences",
+  "Arts & Humanities",
+  "Natural Sciences",
+  "Education",
+  "Business Administration",
+  "Agriculture",
+  "Architecture",
+  "Other",
+];
+
+export default function RegisterPage() {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "student" as "student" | "lecturer" | "admin",
+    university: "University of Lagos (UNILAG)",
+    department: "Computer Science",
+    matricNumber: "",
+  });
+
+  const supabase = createClient();
+
+  const update = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
+
+  const handleGoogleRegister = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (error) throw error;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Google sign-up failed.");
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name || !form.email || !form.password) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+    if (form.password.length < 6) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: {
+            full_name: form.name,
+            role: form.role,
+            university: form.university,
+            department: form.department,
+            matric_number: form.matricNumber,
+          },
+        },
+      });
+      if (error) throw error;
+      toast.success("Account created! Check your email to verify, or log in now.");
+      router.push("/dashboard");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen">
+      {/* Left panel */}
+      <div className="hidden flex-col justify-between bg-hero-gradient p-10 text-white lg:flex lg:w-1/2">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
+            <Zap className="h-4 w-4 text-white" />
+          </div>
+          <span className="font-bold text-xl">UniBridge</span>
+        </Link>
+
+        <div>
+          <p className="text-3xl font-bold leading-tight">
+            Keep your education alive — no matter what.
+          </p>
+          <p className="mt-4 text-white/80">
+            AI summaries, offline access, opportunity matching, and wellness support — all built for
+            Nigerian university students.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {[
+            "Free to start — no credit card needed",
+            "Works offline with 1 GB cached storage",
+            "AI summaries in English, Yoruba & Pidgin",
+            "Scholarship & gig matching powered by AI",
+          ].map((feat) => (
+            <div key={feat} className="flex items-center gap-2 text-sm text-white/85">
+              <div className="h-1.5 w-1.5 rounded-full bg-white" />
+              {feat}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right panel */}
+      <div className="flex flex-1 flex-col items-center justify-center px-4 py-12 md:px-8">
+        <div className="w-full max-w-sm">
+          <Link href="/" className="mb-8 flex items-center gap-2 lg:hidden">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gradient">
+              <Zap className="h-3.5 w-3.5 text-white" />
+            </div>
+            <span className="font-bold">UniBridge</span>
+          </Link>
+
+          <h1 className="text-2xl font-bold">Create your account</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Join your virtual campus — it's free to start.
+          </p>
+
+          {step === 1 && (
+            <>
+              <button
+                onClick={handleGoogleRegister}
+                disabled={loading}
+                className="mt-6 flex w-full items-center justify-center gap-3 rounded-xl border bg-white py-2.5 text-sm font-medium shadow-sm transition-colors hover:bg-muted disabled:opacity-60"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                </svg>
+                Continue with Google
+              </button>
+
+              <div className="my-6 flex items-center gap-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs text-muted-foreground">or with email</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">Full name</label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => update("name", e.target.value)}
+                    placeholder="Tunde Adesanya"
+                    className="w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm outline-none ring-primary/50 transition-shadow focus:ring-2"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">Email address</label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => update("email", e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm outline-none ring-primary/50 transition-shadow focus:ring-2"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={form.password}
+                      onChange={(e) => update("password", e.target.value)}
+                      placeholder="Min. 6 characters"
+                      className="w-full rounded-xl border bg-white px-3.5 py-2.5 pr-10 text-sm outline-none ring-primary/50 transition-shadow focus:ring-2"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (!form.name || !form.email || !form.password) {
+                      toast.error("Please fill in all fields.");
+                      return;
+                    }
+                    setStep(2);
+                  }}
+                  className="w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                >
+                  Continue
+                </button>
+              </div>
+            </>
+          )}
+
+          {step === 2 && (
+            <form onSubmit={handleRegister} className="mt-6 space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium">I am a…</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["student", "lecturer", "admin"] as const).map((role) => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => update("role", role)}
+                      className={cn(
+                        "rounded-xl border py-2.5 text-sm font-medium capitalize transition-colors",
+                        form.role === role
+                          ? "border-primary bg-accent text-accent-foreground"
+                          : "border-border bg-white hover:bg-muted",
+                      )}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">University</label>
+                <select
+                  value={form.university}
+                  onChange={(e) => update("university", e.target.value)}
+                  className="w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm outline-none ring-primary/50 transition-shadow focus:ring-2"
+                >
+                  {UNIVERSITIES.map((u) => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Department</label>
+                <select
+                  value={form.department}
+                  onChange={(e) => update("department", e.target.value)}
+                  className="w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm outline-none ring-primary/50 transition-shadow focus:ring-2"
+                >
+                  {DEPARTMENTS.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+
+              {form.role === "student" && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">
+                    Matric Number <span className="text-muted-foreground">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.matricNumber}
+                    onChange={(e) => update("matricNumber", e.target.value)}
+                    placeholder="190404001"
+                    className="w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm outline-none ring-primary/50 transition-shadow focus:ring-2"
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="flex-1 rounded-xl border py-2.5 text-sm font-medium hover:bg-muted"
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {loading ? "Creating..." : "Create account"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link href="/auth/login" className="font-medium text-primary hover:underline">
+              Log in
+            </Link>
+          </p>
+
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            By signing up you agree to our{" "}
+            <span className="underline cursor-pointer">Terms of Service</span> and{" "}
+            <span className="underline cursor-pointer">Privacy Policy</span>.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
