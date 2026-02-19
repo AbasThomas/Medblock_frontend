@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UniBridge Frontend MVP
 
-## Getting Started
+UniBridge is a virtual campus platform for Nigerian universities. This MVP is a hackathon-ready Next.js app with working AI endpoints and a demo dashboard.
 
-First, run the development server:
+## What is implemented
 
+- AI lecture summarization
+- AI resource moderation (toxicity safety checks)
+- AI scholarship/gig matching (embedding-based ranking + fallback scoring)
+- AI multilingual translation (English -> Yoruba / Nigerian Pidgin fallback)
+- AI mental health check-in assistant with urgent keyword escalation
+- Pricing plan cards and core platform modules for demo flow
+- Resilient mode: app still works if Hugging Face is unavailable
+
+## Free Hugging Face models used
+
+- Summarization: `facebook/bart-large-cnn` with `sshleifer/distilbart-cnn-12-6` fallback
+- Moderation: `unitary/unbiased-toxic-roberta`
+- Matching embeddings: `sentence-transformers/all-MiniLM-L6-v2`
+- Translation: `facebook/nllb-200-distilled-600M`
+- Check-ins: `google/flan-t5-base`
+
+## Setup
+
+1. Install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Configure environment:
+```bash
+cp .env.example .env.local
+```
+Set `HUGGINGFACE_API_KEY` in `.env.local`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Start dev server:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open `http://localhost:3000`.
 
-## Learn More
+## API routes
 
-To learn more about Next.js, take a look at the following resources:
+- `GET /api/ai/status`
+- `POST /api/ai/summarize`
+- `POST /api/ai/translate`
+- `POST /api/ai/moderate`
+- `POST /api/ai/match`
+- `POST /api/ai/checkin`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Notes for production
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Add Supabase Auth, DB, Storage, and real user data wiring.
+- Add `next-pwa` + IndexedDB queueing for full offline sync.
+- Add moderation review queues for admin users.
+- Add Paystack/Flutterwave server-side payment flows.
