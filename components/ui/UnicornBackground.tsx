@@ -2,11 +2,23 @@
 
 import { useEffect } from "react";
 import Script from "next/script";
+import { usePathname } from "next/navigation";
 
 export function UnicornBackground() {
+  const pathname = usePathname();
+
+  const initializeUnicorn = () => {
+    if (!window.UnicornStudio) return;
+    window.UnicornStudio.init();
+  };
+
   useEffect(() => {
-    window.UnicornStudio?.init();
-  }, []);
+    // Re-initialize after route transitions so the canvas remains mounted on every page.
+    const raf = requestAnimationFrame(() => {
+      initializeUnicorn();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [pathname]);
 
   return (
     <div className="absolute inset-0">
@@ -26,7 +38,7 @@ export function UnicornBackground() {
       <Script
         src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v1.4.29/dist/unicornStudio.umd.js"
         onLoad={() => {
-          window.UnicornStudio?.init();
+          initializeUnicorn();
         }}
         strategy="afterInteractive"
       />

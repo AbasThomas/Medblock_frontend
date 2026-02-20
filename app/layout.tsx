@@ -3,6 +3,7 @@ import { Inter, Montserrat } from "next/font/google";
 import { AppToaster } from "@/components/app-toaster";
 import { UnicornBackground } from "@/components/ui/UnicornBackground";
 import { AmbientBackground } from "@/components/ui/AmbientBackground";
+import { WatchupClient } from "@/components/watchup-client";
 import "./globals.css";
 
 const inter = Inter({
@@ -38,12 +39,14 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${montserrat.variable} font-sans antialiased text-neutral-300 relative isolate selection:bg-emerald-600 selection:text-white overflow-x-hidden`}
       >
-        <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-          <UnicornBackground />
-          <AmbientBackground />
-        </div>
-        <div className="relative z-10">{children}</div>
-        <AppToaster />
+        <WatchupClient>
+          <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+            <UnicornBackground />
+            <AmbientBackground />
+          </div>
+          <div className="relative z-10">{children}</div>
+          <AppToaster />
+        </WatchupClient>
       </body>
     </html>
   );

@@ -14,7 +14,7 @@ import {
 import { Loader2 } from "lucide-react"; // Keeping Loader2 for the spinner
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { getResources, createResource, incrementDownload } from "@/lib/supabase/queries";
+import { addUserPoints, getResources, createResource, incrementDownload } from "@/lib/supabase/queries";
 import { formatFileSize, timeAgo, getResourceTypeColor, cn } from "@/lib/utils";
 
 type Resource = {
@@ -175,6 +175,12 @@ export default function ResourcesPage() {
         file_url: urlData.publicUrl,
         file_size: selectedFile.size,
       });
+
+      try {
+        await addUserPoints(supabase, user.id, 20);
+      } catch {
+        // Points are non-blocking for resource submission.
+      }
 
       toast.success("Resource submitted for review.");
       setShowUpload(false);

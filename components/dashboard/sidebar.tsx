@@ -15,10 +15,12 @@ import {
   Settings01Icon,
   SparklesIcon,
   Award01Icon as TrophyIcon,
+  StarIcon,
   UserCircleIcon,
   VideoReplayIcon,
   Cancel01Icon,
   Shield01Icon,
+  TeacherIcon,
 } from "hugeicons-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -31,6 +33,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/lectures", label: "Lectures", icon: VideoReplayIcon },
   { href: "/dashboard/resources", label: "Resources", icon: BookOpen01Icon },
   { href: "/dashboard/opportunities", label: "Opportunities", icon: TrophyIcon },
+  { href: "/dashboard/gamification", label: "Gamification", icon: StarIcon },
   { href: "/dashboard/wellness", label: "Wellness", icon: Activity01Icon },
   { href: "/dashboard/profile", label: "Profile", icon: UserCircleIcon },
 ];
@@ -168,6 +171,15 @@ function SidebarContent({
           {NAV_ITEMS.map((item) => (
             <NavLink key={item.href} {...item} collapsed={collapsed} onClick={onClose} />
           ))}
+          {(role === "lecturer" || role === "admin") && (
+            <NavLink
+              href="/dashboard/lecturer"
+              label="Lecturer Hub"
+              icon={TeacherIcon}
+              collapsed={collapsed}
+              onClick={onClose}
+            />
+          )}
         </div>
 
         <div className={cn(collapsed ? "mt-4" : "mt-8")}>

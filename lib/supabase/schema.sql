@@ -35,11 +35,19 @@ create policy "Users can insert their own profile"
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, email, name)
+  insert into public.profiles (id, email, name, role, university, department, matric_number)
   values (
     new.id,
     new.email,
-    coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1))
+    coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
+    case
+      when new.raw_user_meta_data->>'role' in ('student', 'lecturer')
+      then new.raw_user_meta_data->>'role'
+      else 'student'
+    end,
+    nullif(new.raw_user_meta_data->>'university', ''),
+    nullif(new.raw_user_meta_data->>'department', ''),
+    nullif(new.raw_user_meta_data->>'matric_number', '')
   );
   return new;
 end;

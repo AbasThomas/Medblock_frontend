@@ -21,10 +21,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   const displayName = profile.name || user.user_metadata?.full_name || user.email?.split("@")[0] || "User";
+  const resolvedRole = profile.role || user.user_metadata?.role;
 
   return (
     <div className="flex h-screen overflow-hidden bg-transparent">
-      <Sidebar role={profile.role} />
+      <Sidebar role={resolvedRole} />
       <div className="flex flex-1 flex-col overflow-hidden bg-black/10 backdrop-blur-md border-l border-white/5">
         <Header
           userName={displayName}

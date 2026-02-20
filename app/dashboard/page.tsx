@@ -86,6 +86,7 @@ export default async function DashboardPage() {
   }
 
   const displayName = profile.name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Student";
+  const resolvedRole = profile.role || user.user_metadata?.role || "student";
   const liveLectures = lectures.filter((l) => l.is_live);
 
   return (
@@ -101,7 +102,7 @@ export default async function DashboardPage() {
             <h1 className="text-4xl md:text-5xl font-medium tracking-tighter">Welcome back, {displayName}</h1>
             <p className="text-sm text-neutral-400 font-light max-w-xl">
               <span className="text-[#0A8F6A] font-bold">Institution:</span> {profile.university || "Not set"} -{" "}
-              <span className="uppercase text-[9px] font-bold tracking-widest bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">{profile.role || "user"}</span> -{" "}
+              <span className="uppercase text-[9px] font-bold tracking-widest bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">{resolvedRole}</span> -{" "}
               <span className="uppercase text-[9px] font-bold tracking-widest text-[#0A8F6A] bg-[#0A8F6A]/10 border border-[#0A8F6A]/20 px-2 py-0.5 rounded-md">{profile.plan || "basic"} Plan</span>
             </p>
           </div>
@@ -123,6 +124,16 @@ export default async function DashboardPage() {
               <TrophyIcon size={16} className="relative z-10" />
               <span className="relative z-10">Opportunities</span>
             </Link>
+            {(resolvedRole === "lecturer" || resolvedRole === "admin") && (
+              <Link
+                href="/dashboard/lecturer"
+                className="group/btn relative inline-flex items-center gap-2 rounded-xl border border-[#0A8F6A]/30 bg-[#0A8F6A]/10 px-6 py-3 text-xs font-bold uppercase tracking-widest text-white transition-all hover:bg-[#0A8F6A]/20 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
+                <VideoReplayIcon size={16} className="relative z-10 text-[#0A8F6A]" />
+                <span className="relative z-10">Lecturer Hub</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
