@@ -1,118 +1,87 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  Calendar01Icon,
+  Cancel01Icon,
   Clock01Icon,
   Download01Icon,
-  PlayIcon,
-  SignalIcon,
-  Search01Icon,
-  SparklesIcon,
-  UserGroupIcon,
-  VideoReplayIcon,
   PlusSignIcon,
-  Cancel01Icon,
+  PlayIcon,
+  Search01Icon,
+  Upload01Icon,
+  VideoReplayIcon,
 } from "hugeicons-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import {
-  addUserPoints,
-  createLecture,
-  getLectures,
-  setLectureLiveStatus,
-  updateLecture,
-  updateLectureAttendees,
-} from "@/lib/supabase/queries";
-import { formatDateTime, cn } from "@/lib/utils";
+import { addUserPoints, createLecture, getLectures } from "@/lib/supabase/queries";
+import { cn, formatDateTime } from "@/lib/utils";
 
-type Lecture = {
+type VideoLesson = {
   id: string;
   title: string;
   course_code: string;
   lecturer_id?: string;
   lecturer_name: string;
-  university: string;
-  department: string;
-  scheduled_at: string;
-  duration: number;
-  is_live: boolean;
-  is_recorded: boolean;
+  description?: string;
   recording_url?: string;
   stream_url?: string;
-  attendees: number;
-  description?: string;
   tags: string[];
-  summary?: string;
-  offline_available: boolean;
+  created_at: string;
+  scheduled_at: string;
 };
 
-type Tab = "all" | "live" | "upcoming" | "recorded";
-
-type LectureForm = {
+type VideoForm = {
   title: string;
   course_code: string;
-  scheduled_at: string;
-  duration: string;
   description: string;
-  stream_url: string;
+  video_url: string;
+  material_url: string;
   tags: string;
 };
 
+function sanitizeFilename(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(0, 80);
+}
+
 export default function LecturesPage() {
   const searchParams = useSearchParams();
-  const [lectures, setLectures] = useState<Lecture[]>([]);
+  const [videos, setVideos] = useState<VideoLesson[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
-  const [summarizingId, setSummarizingId] = useState<string | null>(null);
-  const [summaries, setSummaries] = useState<Record<string, string>>({});
+  const [mineOnly, setMineOnly] = useState(false);
+
+  const [showUpload, setShowUpload] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [uploadMode, setUploadMode] = useState<"url" | "file">("url");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
 
   const [userId, setUserId] = useState<string | null>(null);
-  const [profile, setProfile] = useState<{
-    role: "student" | "lecturer" | "admin";
-    name: string;
-    university: string;
-    department: string;
-  }>({ role: "student", name: "", university: "", department: "" });
+  const [profile, setProfile] = useState({
+    name: "",
+    role: "student" as "student" | "lecturer" | "admin",
+    university: "",
+    department: "",
+  });
 
-  const [showCreate, setShowCreate] = useState(false);
-  const [creatingLecture, setCreatingLecture] = useState(false);
-  const [lectureForm, setLectureForm] = useState<LectureForm>({
+  const [videoForm, setVideoForm] = useState<VideoForm>({
     title: "",
     course_code: "",
-    scheduled_at: "",
-    duration: "60",
     description: "",
-    stream_url: "",
+    video_url: "",
+    material_url: "",
     tags: "",
   });
 
-  const [activeLecture, setActiveLecture] = useState<Lecture | null>(null);
-  const [connectedPeers, setConnectedPeers] = useState(0);
-  const [sessionConnected, setSessionConnected] = useState(false);
-
-  // Recording modal – shown to the lecturer after ending a live session
-  const [recordingModal, setRecordingModal] = useState<Lecture | null>(null);
-  const [recordingUrlInput, setRecordingUrlInput] = useState("");
-  const [savingRecording, setSavingRecording] = useState(false);
-
-  const roomChannelRef = useRef<RealtimeChannel | null>(null);
-  const createIntentHandledRef = useRef(false);
   const supabase = useMemo(() => createClient(), []);
+  const canUpload = profile.role === "lecturer" || profile.role === "admin";
 
-  const canCreateLecture = profile.role === "lecturer" || profile.role === "admin";
-
-  const canManageLecture = useCallback(
-    (lecture: Lecture) => {
-      if (!userId) return false;
-      if (profile.role === "admin") return true;
-      return profile.role === "lecturer" && lecture.lecturer_id === userId;
-    },
-    [profile.role, userId],
-  );
+  const parseTags = (value: string) =>
+    value
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
 
   const loadIdentity = useCallback(async () => {
     const {
@@ -129,737 +98,435 @@ export default function LecturesPage() {
     try {
       const { data } = await supabase
         .from("profiles")
-        .select("role, name, university, department")
+        .select("name, role, university, department")
         .eq("id", user.id)
         .single();
 
-      const metadataRole = user.user_metadata?.role;
       const resolvedRole =
-        data?.role && (data.role === "student" || data.role === "lecturer" || data.role === "admin")
+        data?.role === "student" || data?.role === "lecturer" || data?.role === "admin"
           ? data.role
-          : metadataRole === "student" || metadataRole === "lecturer" || metadataRole === "admin"
-            ? metadataRole
-            : "student";
+          : "student";
 
       setProfile({
+        name: data?.name ?? user.email?.split("@")[0] ?? "Lecturer",
         role: resolvedRole,
-        name: data?.name ?? user.email?.split("@")[0] ?? "User",
         university: data?.university ?? "",
         department: data?.department ?? "",
       });
     } catch {
       setProfile((prev) => ({
         ...prev,
-        name: user.email?.split("@")[0] ?? "User",
+        name: user.email?.split("@")[0] ?? "Lecturer",
       }));
     }
   }, [supabase]);
 
-  const loadLectures = useCallback(async () => {
+  const loadVideos = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getLectures(supabase, {});
-      setLectures(data as Lecture[]);
+      const rows = (await getLectures(supabase, {})) as VideoLesson[];
+      const mapped = rows
+        .filter((item) => Boolean(item.recording_url))
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setVideos(mapped);
     } catch (err) {
-      toast.error("Failed to load lectures.");
       console.error(err);
+      toast.error("Failed to load uploaded videos.");
     } finally {
       setLoading(false);
     }
   }, [supabase]);
 
-  const leaveLiveRoom = useCallback(async () => {
-    const channel = roomChannelRef.current;
-    if (channel) {
-      await supabase.removeChannel(channel);
-      roomChannelRef.current = null;
-    }
-    setSessionConnected(false);
-    setConnectedPeers(0);
-    setActiveLecture(null);
-  }, [supabase]);
-
-  const joinLiveRoom = useCallback(
-    async (lecture: Lecture) => {
-      if (!userId) {
-        toast.error("Please sign in to join a live session.");
-        return;
-      }
-      if (!isEffectivelyLive(lecture)) {
-        toast.error("This session is not live yet.");
-        return;
-      }
-
-      await leaveLiveRoom();
-
-      const roomChannel = supabase.channel(`lecture-room-${lecture.id}`, {
-        config: {
-          presence: {
-            key: userId,
-          },
-        },
-      });
-
-      roomChannel
-        .on("presence", { event: "sync" }, () => {
-          const state = roomChannel.presenceState();
-          const total = Object.values(state).reduce((sum, entries) => sum + entries.length, 0);
-          setConnectedPeers(total);
-
-          if (canManageLecture(lecture)) {
-            void updateLectureAttendees(supabase, lecture.id, total);
-          }
-        })
-        .on("broadcast", { event: "session-stopped" }, () => {
-          toast.info("Lecture host has ended the live session.");
-          void leaveLiveRoom();
-        })
-        .subscribe((status) => {
-          if (status === "SUBSCRIBED") {
-            void roomChannel.track({
-              user_id: userId,
-              name: profile.name || "Participant",
-              joined_at: new Date().toISOString(),
-            });
-            setSessionConnected(true);
-            void addUserPoints(supabase, userId, 5).catch(() => {
-              // Joining live session should still work if points update fails.
-            });
-          }
-        });
-
-      roomChannelRef.current = roomChannel;
-      setActiveLecture(lecture);
-    },
-    [canManageLecture, leaveLiveRoom, profile.name, supabase, userId],
-  );
-
   useEffect(() => {
     void loadIdentity();
-    void loadLectures();
+    void loadVideos();
+  }, [loadIdentity, loadVideos]);
 
+  useEffect(() => {
+    if (searchParams.get("create") === "1" && canUpload) {
+      setShowUpload(true);
+    }
+  }, [canUpload, searchParams]);
+
+  useEffect(() => {
     const channel = supabase
-      .channel("lectures-realtime")
+      .channel("videos-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "lectures" }, () => {
-        void loadLectures();
+        void loadVideos();
       })
       .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
-      void leaveLiveRoom();
     };
-  }, [leaveLiveRoom, loadIdentity, loadLectures, supabase]);
+  }, [loadVideos, supabase]);
 
-  useEffect(() => {
-    const urlTab = searchParams.get("tab");
-    if (urlTab === "all" || urlTab === "live" || urlTab === "upcoming" || urlTab === "recorded") {
-      setTab(urlTab);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (searchParams.get("create") === "1" && canCreateLecture && !createIntentHandledRef.current) {
-      createIntentHandledRef.current = true;
-      setShowCreate(true);
-    }
-  }, [canCreateLecture, searchParams]);
-
-  // A session is only truly live if the DB says so AND it was scheduled
-  // recently enough that it could still be running (duration + 4h buffer).
-  // This prevents stale is_live=true rows from showing as LIVE in the UI.
-  const isEffectivelyLive = (lecture: Lecture): boolean => {
-    if (!lecture.is_live) return false;
-    const durationMs = (lecture.duration ?? 60) * 60 * 1000;
-    const staleAt = new Date(lecture.scheduled_at).getTime() + durationMs + 4 * 60 * 60 * 1000;
-    return Date.now() < staleAt;
-  };
-
-  const getLectureJoinUrl = (lecture: Lecture): string => {
-    const raw = lecture.stream_url?.trim();
-    if (raw) {
-      if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
-      if (raw.startsWith("meet.jit.si/")) return `https://${raw}`;
-    }
-
-    const safeId = lecture.id.replace(/[^a-zA-Z0-9-]/g, "");
-    return `https://meet.jit.si/unibridge-${safeId}`;
-  };
-
-  const canEmbedVideoUrl = (url: string): boolean => {
-    try {
-      const parsed = new URL(url);
-      return parsed.hostname === "meet.jit.si" || parsed.hostname.endsWith(".jitsi.net");
-    } catch {
-      return false;
-    }
-  };
-
-  const activeLectureJoinUrl = activeLecture ? getLectureJoinUrl(activeLecture) : "";
-  const activeLectureEmbeddable = activeLectureJoinUrl ? canEmbedVideoUrl(activeLectureJoinUrl) : false;
-
-  const filtered = lectures.filter((lecture) => {
-    const effectivelyLive = isEffectivelyLive(lecture);
-
-    const matchesSearch =
+  const filteredVideos = videos.filter((video) => {
+    const searchOk =
       !search ||
-      lecture.title.toLowerCase().includes(search.toLowerCase()) ||
-      lecture.course_code.toLowerCase().includes(search.toLowerCase()) ||
-      lecture.lecturer_name.toLowerCase().includes(search.toLowerCase());
-
-    const matchesTab =
-      tab === "all" ||
-      (tab === "live" && effectivelyLive) ||
-      (tab === "upcoming" && !effectivelyLive && !lecture.is_recorded && new Date(lecture.scheduled_at) > new Date()) ||
-      (tab === "recorded" && lecture.is_recorded);
-
-    return matchesSearch && matchesTab;
+      video.title.toLowerCase().includes(search.toLowerCase()) ||
+      video.course_code.toLowerCase().includes(search.toLowerCase()) ||
+      video.lecturer_name.toLowerCase().includes(search.toLowerCase());
+    const mineOk = !mineOnly || (userId && video.lecturer_id === userId);
+    return searchOk && mineOk;
   });
 
-  const handleSummarize = async (lecture: Lecture) => {
-    const text = lecture.description ?? `${lecture.title} - ${lecture.course_code} by ${lecture.lecturer_name}.`;
-    if (!text) return;
-
-    try {
-      setSummarizingId(lecture.id);
-      const res = await fetch("/api/ai/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, language: "en" }),
-      });
-      const data = (await res.json()) as { summary?: string; error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Failed");
-      setSummaries((prev) => ({ ...prev, [lecture.id]: data.summary ?? "" }));
-      toast.success("Summary generated.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not summarize.");
-    } finally {
-      setSummarizingId(null);
-    }
-  };
-
-  const handleCreateLecture = async (event: React.FormEvent) => {
+  const handlePublishVideo = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!userId) return;
+    if (!userId) {
+      toast.error("Please sign in first.");
+      return;
+    }
 
-    if (!lectureForm.title || !lectureForm.course_code || !lectureForm.scheduled_at) {
-      toast.error("Provide title, course code, and scheduled time.");
+    if (!videoForm.title || !videoForm.course_code) {
+      toast.error("Title and course code are required.");
+      return;
+    }
+
+    if (uploadMode === "url" && !videoForm.video_url.trim()) {
+      toast.error("Please provide a video link.");
+      return;
+    }
+
+    if (uploadMode === "file" && !videoFile) {
+      toast.error("Please select a video file.");
       return;
     }
 
     try {
-      setCreatingLecture(true);
+      setPublishing(true);
+
+      let finalVideoUrl = videoForm.video_url.trim();
+
+      if (uploadMode === "file" && videoFile) {
+        const path = `videos/${userId}/${Date.now()}-${sanitizeFilename(videoFile.name)}`;
+        const { error: uploadError } = await supabase.storage
+          .from("resources")
+          .upload(path, videoFile, {
+            cacheControl: "3600",
+            upsert: false,
+          });
+
+        if (uploadError) {
+          throw new Error(
+            "Video upload failed. Confirm Supabase storage bucket 'resources' exists and allows uploads.",
+          );
+        }
+
+        const { data: publicUrl } = supabase.storage.from("resources").getPublicUrl(path);
+        finalVideoUrl = publicUrl.publicUrl;
+      }
 
       await createLecture(supabase, {
-        title: lectureForm.title.trim(),
-        course_code: lectureForm.course_code.trim().toUpperCase(),
+        title: videoForm.title.trim(),
+        course_code: videoForm.course_code.trim().toUpperCase(),
         lecturer_id: userId,
         lecturer_name: profile.name || "Lecturer",
         university: profile.university || "",
         department: profile.department || "",
-        scheduled_at: new Date(lectureForm.scheduled_at).toISOString(),
-        duration: Number(lectureForm.duration || "60"),
-        description: lectureForm.description.trim(),
-        stream_url: lectureForm.stream_url.trim(),
-        tags: lectureForm.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean),
+        scheduled_at: new Date().toISOString(),
+        duration: 0,
+        description: videoForm.description.trim(),
+        recording_url: finalVideoUrl,
+        stream_url: videoForm.material_url.trim() || undefined,
+        tags: parseTags(videoForm.tags),
         is_live: false,
-        is_recorded: false,
-        offline_available: false,
+        is_recorded: true,
+        offline_available: Boolean(videoForm.material_url.trim()),
       });
 
-      toast.success("Lecture session created.");
-      setShowCreate(false);
-      setLectureForm({
-        title: "",
-        course_code: "",
-        scheduled_at: "",
-        duration: "60",
-        description: "",
-        stream_url: "",
-        tags: "",
-      });
-      await loadLectures();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Unable to create lecture.");
-    } finally {
-      setCreatingLecture(false);
-    }
-  };
-
-  const toggleLiveState = async (lecture: Lecture) => {
-    if (!canManageLecture(lecture)) return;
-
-    try {
-      const wasLive = lecture.is_live;
-      await setLectureLiveStatus(supabase, lecture.id, !wasLive);
-
-      if (wasLive) {
-        toast.success("Live session ended.");
-        // Broadcast end event to all room participants
-        if (activeLecture?.id === lecture.id && roomChannelRef.current) {
-          await roomChannelRef.current.send({ type: "broadcast", event: "session-stopped", payload: {} });
-          await leaveLiveRoom();
-        }
-        // Prompt the lecturer to add a recording URL
-        setRecordingModal(lecture);
-      } else {
-        toast.success("Session is now LIVE!");
-        await joinLiveRoom({ ...lecture, is_live: true });
+      try {
+        await addUserPoints(supabase, userId, 25);
+      } catch {
+        // Publishing should still succeed if points update fails.
       }
 
-      await loadLectures();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Unable to update live status.");
-    }
-  };
-
-  const handleSaveRecording = async () => {
-    if (!recordingModal) return;
-    setSavingRecording(true);
-    try {
-      await updateLecture(supabase, recordingModal.id, {
-        is_recorded: true,
-        recording_url: recordingUrlInput.trim(),
+      toast.success("Video lesson published.");
+      setShowUpload(false);
+      setUploadMode("url");
+      setVideoFile(null);
+      setVideoForm({
+        title: "",
+        course_code: "",
+        description: "",
+        video_url: "",
+        material_url: "",
+        tags: "",
       });
-      toast.success("Recording URL saved. Session is now in Recorded tab.");
-      setRecordingModal(null);
-      setRecordingUrlInput("");
-      await loadLectures();
+      await loadVideos();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not save recording.");
+      toast.error(err instanceof Error ? err.message : "Failed to publish video lesson.");
     } finally {
-      setSavingRecording(false);
+      setPublishing(false);
     }
   };
-
-  const TABS: { id: Tab; label: string; count?: number }[] = [
-    { id: "all", label: "All", count: lectures.length },
-    { id: "live", label: "Live", count: lectures.filter(isEffectivelyLive).length },
-    { id: "upcoming", label: "Upcoming" },
-    { id: "recorded", label: "Recorded", count: lectures.filter((lecture) => lecture.is_recorded).length },
-  ];
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">Lecture Sessions</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-white">Video Lessons</h1>
           <p className="mt-1 text-sm text-neutral-400 font-light">
-            Real-time sessions powered by WebSocket channels and synchronized live status.
+            Upload course videos and optional download materials for students.
           </p>
         </div>
-        {canCreateLecture && (
+        {canUpload && (
           <button
-            onClick={() => setShowCreate(true)}
+            onClick={() => setShowUpload(true)}
             className="inline-flex items-center gap-2 rounded-lg bg-[#0A8F6A] px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:opacity-90 shadow-lg shadow-emerald-500/20 transition-all"
           >
-            <PlusSignIcon size={16} /> New Lecture
+            <PlusSignIcon size={16} /> Upload Video
           </button>
         )}
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="flex gap-1 rounded-xl border border-white/10 bg-black/20 p-1 backdrop-blur-sm">
-          {TABS.map(({ id, label, count }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className={cn(
-                "rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all",
-                tab === id
-                  ? "bg-[#0A8F6A] text-white shadow-[0_0_15px_rgba(10,143,106,0.3)]"
-                  : "text-neutral-500 hover:text-white hover:bg-white/5",
-              )}
-            >
-              {label}
-              {count !== undefined && count > 0 && (
-                <span
-                  className={cn(
-                    "ml-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                    tab === id ? "bg-white/20" : "bg-white/5 text-neutral-500",
-                  )}
-                >
-                  {count}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 sm:ml-auto focus-within:border-[#0A8F6A]/50 transition-colors">
+      <div className="flex flex-wrap gap-4">
+        <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 focus-within:border-[#0A8F6A]/50 transition-colors">
           <Search01Icon size={16} className="text-neutral-500" />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search lectures"
+            placeholder="Search uploaded videos"
             className="w-56 bg-transparent text-sm outline-none text-neutral-200 placeholder:text-neutral-500"
           />
+          {search && (
+            <button onClick={() => setSearch("")}>
+              <Cancel01Icon size={14} className="text-neutral-500 hover:text-white" />
+            </button>
+          )}
         </div>
+
+        <button
+          onClick={() => setMineOnly((prev) => !prev)}
+          className={cn(
+            "rounded-xl border px-4 py-2.5 text-xs font-bold uppercase tracking-widest transition-all",
+            mineOnly
+              ? "border-[#0A8F6A] bg-[#0A8F6A]/20 text-white"
+              : "border-white/10 bg-black/20 text-neutral-500 hover:text-white",
+          )}
+        >
+          My Uploads
+        </button>
       </div>
-
-      {activeLecture && (
-        <div className="rounded-2xl border border-[#0A8F6A]/30 bg-[#0A8F6A]/5 p-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-[#0A8F6A]">Live Room Connected</p>
-              <p className="mt-1 text-sm text-white">{activeLecture.title}</p>
-              <p className="mt-1 text-xs text-neutral-400">WebSocket participants: {connectedPeers}</p>
-            </div>
-            <div className="flex gap-2">
-              {activeLectureJoinUrl && (
-                <a
-                  href={activeLectureJoinUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-lg bg-[#0A8F6A] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white"
-                >
-                  Open in New Tab
-                </a>
-              )}
-              <button
-                onClick={() => void leaveLiveRoom()}
-                className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-neutral-300"
-              >
-                Leave Room
-              </button>
-            </div>
-          </div>
-          {!sessionConnected && (
-            <p className="mt-2 text-xs text-neutral-400">Connecting to live room...</p>
-          )}
-        </div>
-      )}
-
-      {activeLecture && sessionConnected && (
-        <div className="rounded-2xl border border-white/10 bg-black/30 p-4 shadow-xl">
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[#0A8F6A] font-bold">Live Video Call</p>
-              <p className="mt-1 text-sm text-white">{activeLecture.title}</p>
-            </div>
-          </div>
-
-          {activeLectureEmbeddable ? (
-            <iframe
-              src={activeLectureJoinUrl}
-              title={`Live call: ${activeLecture.title}`}
-              className="h-[480px] w-full rounded-xl border border-white/10 bg-black"
-              allow="camera; microphone; display-capture; autoplay; clipboard-write"
-            />
-          ) : (
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-neutral-300">
-              <p className="text-xs uppercase tracking-widest text-neutral-500">External Video Provider</p>
-              <p className="mt-2">
-                This stream host blocks in-app embedding. Use{" "}
-                <a
-                  href={activeLectureJoinUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#0A8F6A] underline"
-                >
-                  this live link
-                </a>{" "}
-                to join.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
 
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="skeleton h-52 rounded-2xl" />
+            <div key={i} className="skeleton h-56 rounded-2xl" />
           ))}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : filteredVideos.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed py-16 text-center">
           <VideoReplayIcon size={40} className="mx-auto text-muted-foreground/40" />
-          <p className="mt-3 text-sm font-medium text-muted-foreground">No lectures found</p>
+          <p className="mt-3 text-sm font-medium text-muted-foreground">No video lessons found</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {search ? "Try a different search." : "Create or schedule a lecture session."}
+            {canUpload ? "Upload your first course video." : "Check back when lecturers publish videos."}
           </p>
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((lecture) => {
-            const effectiveLive = isEffectivelyLive(lecture);
-            return (
+          {filteredVideos.map((video) => (
             <div
-              key={lecture.id}
+              key={video.id}
               className="glass-panel flex flex-col rounded-2xl p-6 shadow-2xl group hover:border-[#0A8F6A]/30 transition-all duration-500"
             >
               <div className="flex items-start justify-between gap-2">
-                <div
-                  className={cn(
-                    "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-white shadow-lg",
-                    effectiveLive ? "bg-red-500 shadow-red-500/20 animate-pulse" : "bg-[#0A8F6A] shadow-emerald-500/20",
-                  )}
-                >
-                  {effectiveLive ? <SignalIcon size={24} /> : <VideoReplayIcon size={24} />}
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0A8F6A]/10 border border-[#0A8F6A]/20 text-[#0A8F6A]">
+                  <VideoReplayIcon size={24} />
                 </div>
-                <div className="flex flex-wrap gap-1">
-                  {effectiveLive && (
-                    <span className="rounded-full bg-red-500/10 border border-red-500/20 px-3 py-1 text-[10px] font-bold text-red-500 tracking-widest uppercase">
-                      LIVE
-                    </span>
-                  )}
-                  {lecture.is_recorded && (
-                    <span className="rounded-full bg-[#0A8F6A]/10 border border-[#0A8F6A]/20 px-3 py-1 text-[10px] font-bold text-[#0A8F6A] tracking-widest uppercase">
-                      RECORDED
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="mt-6 flex-1">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-[#0A8F6A] font-semibold mb-2">{lecture.course_code}</p>
-                <p className="text-lg font-medium leading-tight text-white group-hover:text-[#0A8F6A] transition-colors duration-300">{lecture.title}</p>
-                <p className="mt-2 text-sm text-neutral-400 font-light">{lecture.lecturer_name}</p>
-                {lecture.description && (
-                  <p className="mt-4 line-clamp-2 text-xs text-neutral-500 font-light leading-relaxed">{lecture.description}</p>
+                {video.lecturer_id && userId === video.lecturer_id && (
+                  <span className="rounded-full bg-[#0A8F6A]/10 border border-[#0A8F6A]/20 px-3 py-1 text-[10px] font-bold text-[#0A8F6A] tracking-widest uppercase">
+                    You Uploaded
+                  </span>
                 )}
               </div>
 
-              <div className="mt-6 space-y-2 pt-6 border-t border-white/5">
-                <div className="flex items-center gap-3 text-[10px] font-medium uppercase tracking-widest text-neutral-500">
-                  <Calendar01Icon size={14} className="text-[#0A8F6A]" />
-                  {formatDateTime(lecture.scheduled_at)}
-                </div>
-                <div className="flex items-center gap-4 text-[10px] font-medium uppercase tracking-widest text-neutral-500">
-                  <span className="flex items-center gap-1.5">
-                    <Clock01Icon size={14} className="text-[#0A8F6A]" /> {lecture.duration ?? 60} MIN
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <UserGroupIcon size={14} className="text-[#0A8F6A]" />
-                    {activeLecture?.id === lecture.id ? connectedPeers : lecture.attendees} PARTICIPANTS
-                  </span>
+              <div className="mt-6 flex-1">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-[#0A8F6A] font-semibold mb-2">{video.course_code}</p>
+                <p className="text-lg font-medium leading-tight text-white group-hover:text-[#0A8F6A] transition-colors duration-300">{video.title}</p>
+                <p className="mt-2 text-xs text-neutral-500 uppercase tracking-widest">By {video.lecturer_name}</p>
+                {video.description && (
+                  <p className="mt-4 line-clamp-3 text-xs text-neutral-500 font-light leading-relaxed">{video.description}</p>
+                )}
+              </div>
+
+              <div className="mt-6 space-y-2 border-t border-white/5 pt-5 text-[10px] uppercase tracking-widest text-neutral-500">
+                <div className="flex items-center gap-2">
+                  <Clock01Icon size={14} className="text-[#0A8F6A]" />
+                  Published {formatDateTime(video.created_at || video.scheduled_at)}
                 </div>
               </div>
 
-              {summaries[lecture.id] && (
-                <div className="mt-6 rounded-xl bg-[#0A8F6A]/5 border border-[#0A8F6A]/20 p-4 text-xs font-light leading-relaxed text-neutral-300">
-                  <p className="font-bold uppercase tracking-[0.2em] text-[#0A8F6A] mb-2 text-[10px]">AI Summary</p>
-                  <p>{summaries[lecture.id]}</p>
-                </div>
-              )}
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                {effectiveLive ? (
-                  <button
-                    onClick={() => void joinLiveRoom(lecture)}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:bg-red-600 transition-all shadow-lg shadow-red-500/20"
-                  >
-                    <PlayIcon size={14} /> Join Live
-                  </button>
-                ) : lecture.is_recorded ? (
+              <div className="mt-5 flex gap-2">
+                {video.recording_url && (
                   <a
-                    href={lecture.recording_url ?? "#"}
+                    href={video.recording_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0A8F6A] px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:opacity-90 transition-all shadow-lg shadow-emerald-500/20"
                   >
-                    <PlayIcon size={14} /> Watch
+                    <PlayIcon size={14} /> Watch Video
                   </a>
-                ) : (
-                  <div className="flex-1" />
                 )}
 
-                {lecture.offline_available && (
-                  <button className="flex items-center justify-center rounded-lg border border-white/10 bg-white/5 p-2.5 text-neutral-400 hover:text-white hover:border-white/20 transition-all">
-                    <Download01Icon size={16} />
-                  </button>
-                )}
-
-                <button
-                  onClick={() => void handleSummarize(lecture)}
-                  disabled={summarizingId === lecture.id}
-                  className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-neutral-400 hover:text-white hover:border-white/20 transition-all disabled:opacity-60"
-                >
-                  <SparklesIcon size={14} className="text-[#0A8F6A]" />
-                  {summarizingId === lecture.id ? "..." : "AI Summary"}
-                </button>
-
-                {canManageLecture(lecture) && (
-                  <button
-                    onClick={() => void toggleLiveState(lecture)}
-                    className={cn(
-                      "flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-white transition-all",
-                      effectiveLive ? "bg-red-600 hover:bg-red-700" : "bg-[#0A8F6A] hover:opacity-90",
-                    )}
+                {video.stream_url && (
+                  <a
+                    href={video.stream_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-neutral-300 hover:text-white hover:border-white/20 transition-all"
                   >
-                    <SignalIcon size={14} />
-                    {effectiveLive ? "End" : "Go Live"}
-                  </button>
+                    <Download01Icon size={14} /> Material
+                  </a>
                 )}
               </div>
             </div>
-            );
-          })}
+          ))}
         </div>
       )}
 
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-black/80 p-6 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Create Lecture Session</h2>
-              <button
-                onClick={() => setShowCreate(false)}
-                className="rounded-lg p-1 text-neutral-400 hover:text-white"
-              >
-                <Cancel01Icon size={18} />
+      {showUpload && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xl p-4">
+          <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-black/80 p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-medium tracking-tight text-white">Upload Video Lesson</h2>
+              <button onClick={() => setShowUpload(false)} className="rounded-full p-2 bg-white/5 border border-white/5 text-neutral-500 hover:text-white transition-all">
+                <Cancel01Icon size={16} />
               </button>
             </div>
-            <p className="mt-1 text-xs text-neutral-500">Configure session details. Leave stream URL empty to auto-use an in-app Jitsi room.</p>
+            <p className="text-xs text-neutral-400 font-light leading-relaxed mb-6">
+              Publish course videos and include downloadable material links for students.
+            </p>
 
-            <form onSubmit={(event) => void handleCreateLecture(event)} className="mt-4 space-y-4">
+            <form onSubmit={(event) => void handlePublishVideo(event)} className="space-y-4">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div>
-                  <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-neutral-500">Title</label>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">Title *</label>
                   <input
-                    value={lectureForm.title}
-                    onChange={(event) => setLectureForm((prev) => ({ ...prev, title: event.target.value }))}
-                    className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none focus:border-[#0A8F6A]/50"
-                    placeholder="Lecture title"
+                    value={videoForm.title}
+                    onChange={(event) => setVideoForm((prev) => ({ ...prev, title: event.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-neutral-200 outline-none focus:border-[#0A8F6A]/50"
+                    placeholder="Video title"
                     required
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-neutral-500">Course Code</label>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">Course Code *</label>
                   <input
-                    value={lectureForm.course_code}
-                    onChange={(event) => setLectureForm((prev) => ({ ...prev, course_code: event.target.value.toUpperCase() }))}
-                    className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none focus:border-[#0A8F6A]/50"
-                    placeholder="Course code"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-neutral-500">Scheduled At</label>
-                  <input
-                    type="datetime-local"
-                    value={lectureForm.scheduled_at}
-                    onChange={(event) => setLectureForm((prev) => ({ ...prev, scheduled_at: event.target.value }))}
-                    className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none focus:border-[#0A8F6A]/50"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-neutral-500">Duration (Minutes)</label>
-                  <input
-                    type="number"
-                    min={15}
-                    value={lectureForm.duration}
-                    onChange={(event) => setLectureForm((prev) => ({ ...prev, duration: event.target.value }))}
-                    className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none focus:border-[#0A8F6A]/50"
+                    value={videoForm.course_code}
+                    onChange={(event) => setVideoForm((prev) => ({ ...prev, course_code: event.target.value.toUpperCase() }))}
+                    className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-neutral-200 outline-none focus:border-[#0A8F6A]/50"
+                    placeholder="CSC301"
                     required
                   />
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-3 rounded-xl border border-white/10 bg-black/20 p-2">
+                <button
+                  type="button"
+                  onClick={() => setUploadMode("url")}
+                  className={cn(
+                    "rounded-lg px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                    uploadMode === "url" ? "bg-[#0A8F6A] text-white" : "text-neutral-500 hover:text-white",
+                  )}
+                >
+                  Use Video Link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUploadMode("file")}
+                  className={cn(
+                    "rounded-lg px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                    uploadMode === "file" ? "bg-[#0A8F6A] text-white" : "text-neutral-500 hover:text-white",
+                  )}
+                >
+                  Upload Video File
+                </button>
+              </div>
+
+              {uploadMode === "url" ? (
+                <div>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">Video URL *</label>
+                  <input
+                    type="url"
+                    value={videoForm.video_url}
+                    onChange={(event) => setVideoForm((prev) => ({ ...prev, video_url: event.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-neutral-200 outline-none focus:border-[#0A8F6A]/50"
+                    placeholder="https://youtube.com/... or hosted mp4 link"
+                    required
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">Video File *</label>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={(event) => setVideoFile(event.target.files?.[0] ?? null)}
+                    className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-neutral-200 outline-none focus:border-[#0A8F6A]/50"
+                    required
+                  />
+                  {videoFile && (
+                    <p className="mt-2 text-[11px] text-neutral-500">{videoFile.name}</p>
+                  )}
+                </div>
+              )}
+
               <div>
-                <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-neutral-500">Video Room URL (Optional)</label>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">Download Material URL (Optional)</label>
                 <input
                   type="url"
-                  value={lectureForm.stream_url}
-                  onChange={(event) => setLectureForm((prev) => ({ ...prev, stream_url: event.target.value }))}
-                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none focus:border-[#0A8F6A]/50"
-                  placeholder="https://meet.jit.si/your-room-name"
+                  value={videoForm.material_url}
+                  onChange={(event) => setVideoForm((prev) => ({ ...prev, material_url: event.target.value }))}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-neutral-200 outline-none focus:border-[#0A8F6A]/50"
+                  placeholder="https://drive.google.com/... or document link"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-neutral-500">Description</label>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">Description</label>
                 <textarea
                   rows={3}
-                  value={lectureForm.description}
-                  onChange={(event) => setLectureForm((prev) => ({ ...prev, description: event.target.value }))}
-                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none focus:border-[#0A8F6A]/50"
-                  placeholder="Session overview"
+                  value={videoForm.description}
+                  onChange={(event) => setVideoForm((prev) => ({ ...prev, description: event.target.value }))}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-neutral-200 outline-none focus:border-[#0A8F6A]/50"
+                  placeholder="What this video covers."
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-neutral-500">Tags</label>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">Tags (CSV)</label>
                 <input
-                  value={lectureForm.tags}
-                  onChange={(event) => setLectureForm((prev) => ({ ...prev, tags: event.target.value }))}
-                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white outline-none focus:border-[#0A8F6A]/50"
-                  placeholder="exam prep, revision, algorithms"
+                  value={videoForm.tags}
+                  onChange={(event) => setVideoForm((prev) => ({ ...prev, tags: event.target.value }))}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-neutral-200 outline-none focus:border-[#0A8F6A]/50"
+                  placeholder="exam prep, revision, tutorial"
                 />
               </div>
 
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowCreate(false)}
-                  className="flex-1 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-medium text-neutral-300"
+                  onClick={() => setShowUpload(false)}
+                  className="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-white transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={creatingLecture}
-                  className="flex-1 rounded-xl bg-[#0A8F6A] py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                  disabled={publishing}
+                  className="flex-[2] flex items-center justify-center gap-2 rounded-xl bg-[#0A8F6A] py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-60"
                 >
-                  {creatingLecture ? "Creating..." : "Create Lecture"}
+                  {publishing && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {publishing ? "Publishing..." : (
+                    <>
+                      <Upload01Icon size={14} /> Publish Video
+                    </>
+                  )}
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Recording URL Modal – shown to lecturer after ending a live session */}
-      {recordingModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-black/90 p-6 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-white">Session Ended</h2>
-                <p className="mt-0.5 truncate text-xs text-neutral-500 max-w-xs">{recordingModal.title}</p>
-              </div>
-              <button
-                onClick={() => { setRecordingModal(null); setRecordingUrlInput(""); }}
-                className="rounded-lg p-1 text-neutral-400 hover:text-white"
-              >
-                <Cancel01Icon size={18} />
-              </button>
-            </div>
-            <div className="mt-4 rounded-xl bg-[#0A8F6A]/5 border border-[#0A8F6A]/20 p-4 text-xs text-neutral-300">
-              Your live session has ended. Paste a recording link below so students can watch it later — or skip to leave it as ended.
-            </div>
-            <div className="mt-4">
-              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-neutral-500">
-                Recording URL (optional)
-              </label>
-              <input
-                type="url"
-                value={recordingUrlInput}
-                onChange={(e) => setRecordingUrlInput(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-2.5 text-sm text-white outline-none focus:border-[#0A8F6A]/50"
-                placeholder="https://youtube.com/watch?v=... or Google Drive link"
-              />
-            </div>
-            <div className="mt-4 flex gap-3">
-              <button
-                onClick={() => { setRecordingModal(null); setRecordingUrlInput(""); }}
-                className="flex-1 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm text-neutral-300"
-              >
-                Skip
-              </button>
-              <button
-                onClick={() => void handleSaveRecording()}
-                disabled={savingRecording || !recordingUrlInput.trim()}
-                className="flex-1 rounded-xl bg-[#0A8F6A] py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-              >
-                {savingRecording ? "Saving..." : "Save Recording"}
-              </button>
-            </div>
           </div>
         </div>
       )}

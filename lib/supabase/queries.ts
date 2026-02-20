@@ -106,6 +106,7 @@ export async function createLecture(
     description?: string;
     tags?: string[];
     stream_url?: string;
+    recording_url?: string;
     is_live?: boolean;
     is_recorded?: boolean;
     offline_available?: boolean;
@@ -276,6 +277,8 @@ export async function createOpportunity(
     location?: string;
     is_remote?: boolean;
     application_url?: string;
+    contact_person?: string;
+    contact_link?: string;
     tags?: string[];
     created_by: string;
     submitted_by_name?: string;

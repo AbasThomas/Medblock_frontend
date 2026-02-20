@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Award,
   Camera,
@@ -16,6 +17,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { PLAN_CATALOG } from "@/lib/pricing";
 import { updateProfile } from "@/lib/supabase/queries";
+import type { Plan } from "@/lib/types";
 import { getInitials, cn } from "@/lib/utils";
 
 type Profile = {
@@ -39,9 +41,12 @@ type ActivityStats = {
 };
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [upgradingPlan, setUpgradingPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(true);
   const [activity, setActivity] = useState<ActivityStats>({
     uploads: 0,
@@ -58,6 +63,7 @@ export default function ProfilePage() {
   });
 
   const supabase = useMemo(() => createClient(), []);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -131,6 +137,76 @@ export default function ProfilePage() {
     }
   };
 
+  const handleAvatarUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !profile) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      setAvatarUploading(true);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated.");
+
+      const extension = file.name.split(".").pop() ?? "jpg";
+      const path = `avatars/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("resources")
+        .upload(path, file, {
+          cacheControl: "3600",
+          upsert: true,
+        });
+
+      if (uploadError) {
+        throw new Error(
+          "Profile image upload failed. Confirm storage bucket 'resources' exists and is writable.",
+        );
+      }
+
+      const { data: publicUrl } = supabase.storage.from("resources").getPublicUrl(path);
+      const updated = await updateProfile(supabase, user.id, { avatar: publicUrl.publicUrl });
+
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              avatar: String(updated.avatar ?? publicUrl.publicUrl),
+            }
+          : prev,
+      );
+      toast.success("Profile image updated.");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Unable to upload profile image.");
+    } finally {
+      setAvatarUploading(false);
+      event.target.value = "";
+    }
+  };
+
+  const handlePlanUpgrade = async (targetPlan: Plan) => {
+    if (!profile || profile.plan === targetPlan) return;
+
+    try {
+      setUpgradingPlan(targetPlan);
+      const updated = await updateProfile(supabase, profile.id, { plan: targetPlan });
+      setProfile((prev) => (prev ? { ...prev, plan: String(updated.plan ?? targetPlan) as Profile["plan"] } : prev));
+      toast.success(`Plan updated to ${PLAN_CATALOG[targetPlan].name}.`);
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Unable to upgrade plan.");
+    } finally {
+      setUpgradingPlan(null);
+    }
+  };
+
   const planInfo = PLAN_CATALOG[(profile?.plan ?? "basic") as keyof typeof PLAN_CATALOG];
 
   const badges = useMemo(
@@ -191,10 +267,32 @@ export default function ProfilePage() {
             <div className="-mt-12 flex items-end gap-6">
               <div className="group relative">
                 <div className="flex h-28 w-28 items-center justify-center rounded-3xl border-4 border-black/40 bg-[#0A8F6A] text-4xl font-bold text-white shadow-2xl shadow-emerald-500/20 transition-transform duration-500 group-hover:scale-105">
-                  {profile ? getInitials(profile.name || profile.email) : <User className="h-12 w-12" />}
+                  {profile?.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={profile.avatar}
+                      alt={profile.name || profile.email}
+                      className="h-full w-full rounded-2xl object-cover"
+                    />
+                  ) : profile ? (
+                    getInitials(profile.name || profile.email)
+                  ) : (
+                    <User className="h-12 w-12" />
+                  )}
                 </div>
-                <button className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-black/60 text-white shadow-xl transition-all hover:bg-[#0A8F6A]">
-                  <Camera className="h-4 w-4" />
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => void handleAvatarUpload(event)}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={avatarUploading}
+                  className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-black/60 text-white shadow-xl transition-all hover:bg-[#0A8F6A] disabled:opacity-60"
+                >
+                  {avatarUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
                 </button>
               </div>
               <div className="mb-2">
@@ -343,11 +441,20 @@ export default function ProfilePage() {
                 </li>
               ))}
             </ul>
-            {profile?.plan !== "premium" && (
-              <button className="w-full rounded-xl bg-[#0A8F6A] py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20 transition-all hover:opacity-90">
-                Upgrade to Premium
-              </button>
-            )}
+            <div className="space-y-2">
+              {(Object.keys(PLAN_CATALOG) as Plan[])
+                .filter((plan) => plan !== profile?.plan)
+                .map((plan) => (
+                  <button
+                    key={plan}
+                    onClick={() => void handlePlanUpgrade(plan)}
+                    disabled={upgradingPlan !== null}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 py-3 text-xs font-bold uppercase tracking-widest text-white transition-all hover:border-[#0A8F6A]/40 hover:bg-[#0A8F6A]/15 disabled:opacity-60"
+                  >
+                    {upgradingPlan === plan ? "Updating..." : `Switch to ${PLAN_CATALOG[plan].name}`}
+                  </button>
+                ))}
+            </div>
           </div>
         </div>
       </div>

@@ -58,7 +58,7 @@ export default async function DashboardPage() {
   let profile: { name?: string; role?: string; university?: string; points?: number; plan?: string } = {};
   let lectures: {
     id: string; title: string; course_code: string; lecturer_name: string;
-    scheduled_at: string; is_live: boolean; duration?: number; university?: string;
+    scheduled_at: string; is_live: boolean; duration?: number; university?: string; recording_url?: string;
   }[] = [];
   let resources: {
     id: string; title: string; type: string; course_code: string;
@@ -78,7 +78,9 @@ export default async function DashboardPage() {
     ]);
 
     if (profileRes.data) profile = profileRes.data;
-    lectures = (lectureRes ?? []).slice(0, 5) as typeof lectures;
+    lectures = (lectureRes ?? [])
+      .filter((item) => Boolean(item.recording_url))
+      .slice(0, 5) as typeof lectures;
     resources = (resourceRes ?? []) as typeof resources;
     opportunities = (oppRes ?? []) as typeof opportunities;
   } catch {
@@ -87,7 +89,7 @@ export default async function DashboardPage() {
 
   const displayName = profile.name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Student";
   const resolvedRole = profile.role || user.user_metadata?.role || "student";
-  const liveLectures = lectures.filter((l) => l.is_live);
+  const videoLessons = lectures;
 
   return (
     <div className="space-y-6 animate-reveal">
@@ -114,7 +116,7 @@ export default async function DashboardPage() {
             >
               <div className="absolute inset-0 bg-[#0A8F6A]/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
               <VideoReplayIcon size={16} className="relative z-10 text-[#0A8F6A]" />
-              <span className="relative z-10">My Lectures</span>
+              <span className="relative z-10">Video Lessons</span>
             </Link>
             <Link
               href="/dashboard/opportunities"
@@ -124,16 +126,6 @@ export default async function DashboardPage() {
               <TrophyIcon size={16} className="relative z-10" />
               <span className="relative z-10">Opportunities</span>
             </Link>
-            {(resolvedRole === "lecturer" || resolvedRole === "admin") && (
-              <Link
-                href="/dashboard/lecturer"
-                className="group/btn relative inline-flex items-center gap-2 rounded-xl border border-[#0A8F6A]/30 bg-[#0A8F6A]/10 px-6 py-3 text-xs font-bold uppercase tracking-widest text-white transition-all hover:bg-[#0A8F6A]/20 overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
-                <VideoReplayIcon size={16} className="relative z-10 text-[#0A8F6A]" />
-                <span className="relative z-10">Lecturer Hub</span>
-              </Link>
-            )}
           </div>
         </div>
       </div>
@@ -141,9 +133,9 @@ export default async function DashboardPage() {
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Total Lectures"
-          value={lectures.length}
-          sub={`${liveLectures.length} live now`}
+          label="Video Lessons"
+          value={videoLessons.length}
+          sub="On-demand learning"
           icon={VideoReplayIcon}
         />
         <StatCard
@@ -167,54 +159,36 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Lectures */}
+        {/* Recent Video Lessons */}
         <div className="glass-panel p-5 rounded-2xl relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-medium text-white tracking-tight">Recent Lectures</h2>
+            <h2 className="font-medium text-white tracking-tight">Recent Video Lessons</h2>
             <Link href="/dashboard/lectures" className="flex items-center gap-1 text-xs text-emerald-500 hover:text-emerald-400 hover:underline transition-colors">
               View all <ArrowRight01Icon size={12} />
             </Link>
           </div>
 
           <div className="space-y-3">
-            {lectures.length === 0 ? (
+            {videoLessons.length === 0 ? (
               <div className="rounded-xl border border-dashed border-white/10 py-8 text-center text-sm text-neutral-500 bg-white/5">
-                No lectures yet. Check back soon.
+                No video lessons yet. Check back soon.
               </div>
             ) : (
-              lectures.map((lecture) => (
+              videoLessons.map((lecture) => (
                 <div key={lecture.id} className="flex items-start gap-3 rounded-xl border border-white/5 bg-white/5 p-3 hover:bg-white/10 transition-colors group">
-                  <div className={cn(
-                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white shadow-lg",
-                    lecture.is_live ? "bg-red-500/80 shadow-red-500/20 animate-pulse" : "bg-emerald-600/80 shadow-emerald-500/20",
-                  )}>
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white shadow-lg bg-emerald-600/80 shadow-emerald-500/20">
                     <VideoReplayIcon size={16} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-medium text-neutral-200 group-hover:text-white transition-colors">{lecture.title}</p>
-                      {lecture.is_live && (
-                        <span className="badge-live shrink-0 text-[10px] font-semibold text-red-500">
-                          LIVE
-                        </span>
-                      )}
-                    </div>
+                    <p className="truncate text-sm font-medium text-neutral-200 group-hover:text-white transition-colors">{lecture.title}</p>
                     <p className="text-xs text-neutral-500">
                       {lecture.course_code} - {lecture.lecturer_name}
                     </p>
                     <p className="mt-0.5 flex items-center gap-1 text-xs text-neutral-500">
                       <Calendar01Icon size={12} />
-                      {formatDateTime(lecture.scheduled_at)}
+                      Uploaded {formatDateTime(lecture.scheduled_at)}
                     </p>
                   </div>
-                  {lecture.is_live && (
-                    <Link
-                      href="/dashboard/lectures"
-                      className="shrink-0 rounded-lg bg-red-500 px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
-                    >
-                      Join
-                    </Link>
-                  )}
                 </div>
               ))
             )}

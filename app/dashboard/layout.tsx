@@ -24,7 +24,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const resolvedRole = profile.role || user.user_metadata?.role;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-transparent">
+    <div className="flex min-h-screen lg:h-screen overflow-hidden bg-transparent">
       <Sidebar role={resolvedRole} />
       <div className="flex flex-1 flex-col overflow-hidden bg-black/10 backdrop-blur-md border-l border-white/5">
         <Header

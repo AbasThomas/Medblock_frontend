@@ -102,6 +102,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), sans-serif;
 }
@@ -168,4 +182,3 @@ h1, h2, h3, h4, h5, h6 {
   background: #333;
   border-radius: 3px;
 }
-

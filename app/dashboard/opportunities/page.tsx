@@ -37,6 +37,8 @@ type Opportunity = {
   location: string;
   is_remote: boolean;
   application_url: string;
+  contact_person?: string;
+  contact_link?: string;
   tags: string[];
   created_at: string;
   matchScore?: number;
@@ -55,6 +57,8 @@ type OpportunityForm = {
   location: string;
   is_remote: boolean;
   application_url: string;
+  contact_person: string;
+  contact_link: string;
   tags: string;
 };
 
@@ -99,6 +103,8 @@ export default function OpportunitiesPage() {
     location: "",
     is_remote: false,
     application_url: "",
+    contact_person: "",
+    contact_link: "",
     tags: "",
   });
 
@@ -268,6 +274,11 @@ export default function OpportunitiesPage() {
       return;
     }
 
+    if (!opportunityForm.contact_person.trim()) {
+      toast.error("Please provide a contact person.");
+      return;
+    }
+
     const payload = {
       title: opportunityForm.title.trim(),
       type: opportunityForm.type,
@@ -281,6 +292,8 @@ export default function OpportunitiesPage() {
       location: opportunityForm.location.trim() || profile.university || "",
       is_remote: opportunityForm.is_remote,
       application_url: opportunityForm.application_url.trim(),
+      contact_person: opportunityForm.contact_person.trim(),
+      contact_link: opportunityForm.contact_link.trim() || undefined,
       tags: parseList(opportunityForm.tags),
       created_by: userId,
       submitted_by_name: profile.name,
@@ -311,6 +324,8 @@ export default function OpportunitiesPage() {
         location: "",
         is_remote: false,
         application_url: "",
+        contact_person: "",
+        contact_link: "",
         tags: "",
       });
       await loadOpportunities();
@@ -468,6 +483,21 @@ export default function OpportunitiesPage() {
                   )}
                   {opportunity.submitted_by_name && (
                     <p className="mt-3 text-[10px] uppercase tracking-widest text-neutral-500">Submitted by {opportunity.submitted_by_name}</p>
+                  )}
+                  {opportunity.contact_person && (
+                    <p className="mt-2 text-[10px] uppercase tracking-widest text-neutral-500">
+                      Contact: {opportunity.contact_person}
+                    </p>
+                  )}
+                  {opportunity.contact_link && (
+                    <a
+                      href={opportunity.contact_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex text-[10px] font-bold uppercase tracking-widest text-[#0A8F6A] hover:underline"
+                    >
+                      Contact Profile
+                    </a>
                   )}
                   {opportunity.matchReason && (
                     <div className="mt-4 rounded-lg bg-[#0A8F6A]/5 border border-[#0A8F6A]/10 p-3 italic text-[11px] text-neutral-400 font-light">
@@ -666,6 +696,29 @@ export default function OpportunitiesPage() {
                   placeholder="https://..."
                   required
                 />
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">Contact Person *</label>
+                  <input
+                    value={opportunityForm.contact_person}
+                    onChange={(event) => setOpportunityForm((prev) => ({ ...prev, contact_person: event.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-neutral-200 outline-none focus:border-[#0A8F6A]/50"
+                    placeholder="Hiring manager or recruiter name"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">Contact Link</label>
+                  <input
+                    type="url"
+                    value={opportunityForm.contact_link}
+                    onChange={(event) => setOpportunityForm((prev) => ({ ...prev, contact_link: event.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-neutral-200 outline-none focus:border-[#0A8F6A]/50"
+                    placeholder="https://linkedin.com/in/... or https://upwork.com/..."
+                  />
+                </div>
               </div>
 
               <div>

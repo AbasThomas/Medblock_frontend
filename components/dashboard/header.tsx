@@ -53,11 +53,11 @@ export function Header({ userName, userEmail, userAvatar }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-white/5 bg-black/10 px-8 backdrop-blur-xl">
       {/* Left: search (desktop only) */}
-      <div className="hidden items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-5 py-2.5 text-sm text-neutral-400 focus-within:border-[#0A8F6A]/50 focus-within:bg-white/5 transition-all duration-500 md:flex w-[450px] group shadow-2xl">
+      <div className="hidden w-full max-w-[450px] items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-5 py-2.5 text-sm text-neutral-400 focus-within:border-[#0A8F6A]/50 focus-within:bg-white/5 transition-all duration-500 md:flex group shadow-2xl">
         <Search01Icon size={16} className="text-neutral-500 group-focus-within:text-[#0A8F6A] transition-colors" />
         <input
           type="text"
-          placeholder="Search resources, lectures..."
+          placeholder="Search resources, videos..."
           className="bg-transparent border-none outline-none w-full placeholder:text-neutral-600 text-xs font-bold tracking-widest text-white"
         />
         <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] font-bold text-neutral-600">

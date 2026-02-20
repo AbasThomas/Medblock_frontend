@@ -121,7 +121,7 @@ export function UniBridgeDashboard() {
     { label: "Registered Users", value: "0" },
     { label: "Approved Resources", value: "0" },
     { label: "Active Opportunities", value: "0" },
-    { label: "Live Lectures", value: "0" },
+    { label: "Uploaded Videos", value: "0" },
   ]);
   const [opportunityPool, setOpportunityPool] = useState<OpportunityPayload[]>([]);
   const [profileContext, setProfileContext] = useState({
@@ -159,11 +159,11 @@ export function UniBridgeDashboard() {
   const loadOperationalData = useCallback(async () => {
     try {
       const today = new Date().toISOString().split("T")[0];
-      const [usersRes, resourcesRes, oppRes, liveLecturesRes, opportunitiesRes] = await Promise.all([
+      const [usersRes, resourcesRes, oppRes, videoLessonsRes, opportunitiesRes] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("resources").select("id", { count: "exact", head: true }).eq("is_approved", true),
         supabase.from("opportunities").select("id", { count: "exact", head: true }).gte("deadline", today),
-        supabase.from("lectures").select("id", { count: "exact", head: true }).eq("is_live", true),
+        supabase.from("lectures").select("id", { count: "exact", head: true }).not("recording_url", "is", null),
         supabase
           .from("opportunities")
           .select("*")
@@ -176,7 +176,7 @@ export function UniBridgeDashboard() {
         { label: "Registered Users", value: String(usersRes.count ?? 0) },
         { label: "Approved Resources", value: String(resourcesRes.count ?? 0) },
         { label: "Active Opportunities", value: String(oppRes.count ?? 0) },
-        { label: "Live Lectures", value: String(liveLecturesRes.count ?? 0) },
+        { label: "Uploaded Videos", value: String(videoLessonsRes.count ?? 0) },
       ]);
 
       const mappedOpportunities: OpportunityPayload[] = (opportunitiesRes.data ?? []).map((item) => ({
@@ -201,7 +201,7 @@ export function UniBridgeDashboard() {
         { label: "Registered Users", value: "0" },
         { label: "Approved Resources", value: "0" },
         { label: "Active Opportunities", value: "0" },
-        { label: "Live Lectures", value: "0" },
+        { label: "Uploaded Videos", value: "0" },
       ]);
       setOpportunityPool([]);
     }

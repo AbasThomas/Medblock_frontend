@@ -10,9 +10,9 @@ export function Footer() {
                 <Image
                     src="/logo.png"
                     alt="UniBridge logo"
-                    width={44}
-                    height={44}
-                    className="h-11 w-11 object-contain"
+                    width={50}
+                    height={50}
+                    className="h-[50px] w-[50px] object-contain"
                 />
                 <span className="text-xl font-bold tracking-tight text-white uppercase leading-none">
                     UniBridge Systems

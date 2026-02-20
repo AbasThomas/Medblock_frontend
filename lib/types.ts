@@ -84,6 +84,8 @@ export interface Opportunity {
   location: string;
   isRemote: boolean;
   applicationUrl: string;
+  contactPerson?: string;
+  contactLink?: string;
   matchScore?: number;
   tags: string[];
   createdAt: string;

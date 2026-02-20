@@ -183,6 +183,8 @@ create table if not exists public.opportunities (
   location text default 'Nigeria',
   is_remote boolean default false,
   application_url text default '',
+  contact_person text default '',
+  contact_link text default '',
   tags text[] default '{}',
   created_at timestamptz default now()
 );

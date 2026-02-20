@@ -21,7 +21,6 @@ import {
   VideoReplayIcon,
   Cancel01Icon,
   Shield01Icon,
-  TeacherIcon,
 } from "hugeicons-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -31,7 +30,7 @@ const SIDEBAR_COLLAPSED_KEY = "unibridge.sidebar.collapsed";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: DashboardSquare01Icon, exact: true },
-  { href: "/dashboard/lectures", label: "Lectures", icon: VideoReplayIcon },
+  { href: "/dashboard/lectures", label: "Videos", icon: VideoReplayIcon },
   { href: "/dashboard/resources", label: "Resources", icon: BookOpen01Icon },
   { href: "/dashboard/opportunities", label: "Opportunities", icon: TrophyIcon },
   { href: "/dashboard/events", label: "Events", icon: Calendar01Icon },
@@ -135,9 +134,9 @@ function SidebarContent({
           <Image
             src="/logo.png"
             alt="UniBridge logo"
-            width={44}
-            height={44}
-            className="h-11 w-11 object-contain shrink-0"
+            width={50}
+            height={50}
+            className="h-[50px] w-[50px] object-contain shrink-0"
             priority
           />
           {!collapsed && (
@@ -173,15 +172,6 @@ function SidebarContent({
           {NAV_ITEMS.map((item) => (
             <NavLink key={item.href} {...item} collapsed={collapsed} onClick={onClose} />
           ))}
-          {(role === "lecturer" || role === "admin") && (
-            <NavLink
-              href="/dashboard/lecturer"
-              label="Lecturer Hub"
-              icon={TeacherIcon}
-              collapsed={collapsed}
-              onClick={onClose}
-            />
-          )}
         </div>
 
         <div className={cn(collapsed ? "mt-4" : "mt-8")}>

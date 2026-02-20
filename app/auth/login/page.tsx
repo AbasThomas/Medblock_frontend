@@ -77,9 +77,9 @@ export default function LoginPage() {
             <Image
               src="/logo.png"
               alt="UniBridge"
-              width={40}
-              height={40}
-              className="h-10 w-10 object-contain transition-transform group-hover:scale-105"
+              width={50}
+              height={50}
+              className="h-[50px] w-[50px] object-contain transition-transform group-hover:scale-105"
               priority
             />
             <span className="font-bold text-xl tracking-tight text-white uppercase">UniBridge</span>
@@ -140,11 +140,26 @@ export default function LoginPage() {
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 md:px-10 relative z-10">
         {/* Mobile logo */}
         <Link href="/" className="mb-10 flex items-center gap-2 lg:hidden">
-          <Image src="/logo.png" alt="UniBridge" width={36} height={36} className="h-9 w-9 object-contain" priority />
+          <Image src="/logo.png" alt="UniBridge" width={50} height={50} className="h-[50px] w-[50px] object-contain" priority />
           <span className="font-bold text-lg tracking-tight text-white uppercase">UniBridge</span>
         </Link>
 
         <div className="w-full max-w-[360px]">
+          <div className="mb-6 grid grid-cols-2 rounded-xl border border-white/10 bg-white/5 p-1">
+            <Link
+              href="/auth/login"
+              className="rounded-lg bg-[#0A8F6A] px-3 py-2 text-center text-[11px] font-bold uppercase tracking-widest text-white"
+            >
+              Login
+            </Link>
+            <Link
+              href="/auth/register"
+              className="rounded-lg px-3 py-2 text-center text-[11px] font-bold uppercase tracking-widest text-neutral-400 transition-colors hover:text-white"
+            >
+              Sign Up
+            </Link>
+          </div>
+
           <div className="mb-8">
             <h1 className="text-2xl font-semibold text-white tracking-tight">Welcome back</h1>
             <p className="mt-1.5 text-sm text-neutral-400">Sign in to your UniBridge account</p>
