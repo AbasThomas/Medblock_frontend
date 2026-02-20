@@ -24,14 +24,11 @@ export function Header() {
                     <Link href="#process" className="hover:text-white transition-colors duration-300">
                         Protocol
                     </Link>
+                    <Link href="#ecosystem" className="hover:text-white transition-colors duration-300">
+                        Ecosystem
+                    </Link>
                     <Link href="#solutions" className="hover:text-white transition-colors duration-300">
                         Architecture
-                    </Link>
-                    <Link href="#order" className="hover:text-white transition-colors duration-300">
-                        Pricing
-                    </Link>
-                    <Link href="#faq" className="hover:text-white transition-colors duration-300">
-                        Intel
                     </Link>
                 </nav>
                 <div className="hidden md:flex items-center gap-4">

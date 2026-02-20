@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { Bell, Search } from "lucide-react";
+import { Notification01Icon, Search01Icon } from "hugeicons-react";
 import { createClient } from "@/lib/supabase/client";
 import { getInitials } from "@/lib/utils";
 import { getNotifications, markAllNotificationsRead } from "@/lib/supabase/queries";
@@ -54,7 +54,7 @@ export function Header({ userName, userEmail, userAvatar }: HeaderProps) {
     <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-white/5 bg-black/10 px-8 backdrop-blur-xl">
       {/* Left: search (desktop only) */}
       <div className="hidden items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-5 py-2.5 text-sm text-neutral-400 focus-within:border-[#0A8F6A]/50 focus-within:bg-white/5 transition-all duration-500 md:flex w-[450px] group shadow-2xl">
-        <Search className="h-4 w-4 text-neutral-500 group-focus-within:text-[#0A8F6A] transition-colors" />
+        <Search01Icon size={16} className="text-neutral-500 group-focus-within:text-[#0A8F6A] transition-colors" />
         <input
           type="text"
           placeholder="Search resources, lectures..."
@@ -77,7 +77,7 @@ export function Header({ userName, userEmail, userAvatar }: HeaderProps) {
             onClick={() => setShowNotifs(!showNotifs)}
             className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-[#0A8F6A]/30 transition-all duration-500 text-neutral-500 hover:text-white group shadow-xl"
           >
-            <Bell className="h-4 w-4 group-hover:scale-110 transition-transform" />
+            <Notification01Icon size={20} className="group-hover:scale-110 transition-transform" />
             {unreadCount > 0 && (
               <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-lg bg-[#0A8F6A] text-[9px] font-bold text-white shadow-[0_0_15px_rgba(10,143,106,0.5)] animate-pulse">
                 {unreadCount}
@@ -106,7 +106,7 @@ export function Header({ userName, userEmail, userAvatar }: HeaderProps) {
                 <div className="max-h-96 overflow-y-auto custom-scrollbar">
                   {notifs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
-                      <Bell className="h-8 w-8 text-neutral-800 mb-3" />
+                      <Notification01Icon size={32} className="text-neutral-800 mb-3" />
                       <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">No new alerts</p>
                     </div>
                   ) : (

@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
-  AlertTriangle,
-  HeartPulse,
-  Loader2,
-  Phone,
-  Send,
-} from "lucide-react";
+  Alert01Icon as AlertTriangle,
+  Activity01Icon as HeartPulse,
+  TelephoneIcon as Phone,
+  SentIcon as Send,
+} from "hugeicons-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { getChatMessages, saveChatMessage } from "@/lib/supabase/queries";
@@ -161,7 +161,7 @@ export default function WellnessPage() {
         {/* Chat header */}
         <div className="flex items-center gap-4 border-b border-white/5 px-6 py-5 relative z-10">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A8F6A]/10 border border-[#0A8F6A]/20">
-            <HeartPulse className="h-6 w-6 text-[#0A8F6A]" />
+            <HeartPulse size={24} className="text-[#0A8F6A]" />
           </div>
           <div>
             <p className="text-lg font-medium tracking-tight text-white">Wellness Support</p>
@@ -205,7 +205,7 @@ export default function WellnessPage() {
           ) : messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
               <div className="w-20 h-20 rounded-full bg-[#0A8F6A]/10 flex items-center justify-center mb-6">
-                <HeartPulse className="h-10 w-10 text-[#0A8F6A] animate-pulse" />
+                <HeartPulse size={40} className="text-[#0A8F6A] animate-pulse" />
               </div>
               <p className="text-xl font-medium tracking-tight text-white mb-2">
                 Support Session Ready
@@ -235,7 +235,7 @@ export default function WellnessPage() {
                   "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border shadow-lg",
                   msg.role === "user" ? "bg-white/10 border-white/20" : "bg-[#0A8F6A]/20 border-[#0A8F6A]/30"
                 )}>
-                  {msg.role === "assistant" ? <HeartPulse className="h-4 w-4 text-[#0A8F6A]" /> : <div className="h-4 w-4 rounded-full bg-white/30" />}
+                  {msg.role === "assistant" ? <HeartPulse size={16} className="text-[#0A8F6A]" /> : <div className="h-4 w-4 rounded-full bg-white/30" />}
                 </div>
                 <div
                   className={cn(
@@ -259,7 +259,7 @@ export default function WellnessPage() {
           {loading && (
             <div className="flex items-end gap-3">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0A8F6A]/10 border border-[#0A8F6A]/20">
-                <HeartPulse className="h-4 w-4 text-[#0A8F6A]" />
+                <HeartPulse size={16} className="text-[#0A8F6A]" />
               </div>
               <div className="rounded-2xl rounded-bl-sm bg-black/40 border border-[#0A8F6A]/10 px-6 py-4 backdrop-blur-md">
                 <div className="flex gap-2">
@@ -293,7 +293,7 @@ export default function WellnessPage() {
               disabled={!input.trim() || loading}
               className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0A8F6A] text-white shadow-lg shadow-emerald-500/20 hover:opacity-90 disabled:opacity-40 transition-all"
             >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send size={20} />}
             </button>
           </div>
         </div>
@@ -305,7 +305,7 @@ export default function WellnessPage() {
         <div className="glass-panel rounded-2xl p-6 border-white/5 shadow-2xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-tr from-red-500/5 to-transparent pointer-events-none"></div>
           <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-widest text-red-500 mb-4 relative z-10">
-            <AlertTriangle className="h-4 w-4 shadow-[0_0_10px_rgba(239,68,68,0.3)]" />
+            <AlertTriangle size={16} className="shadow-[0_0_10px_rgba(239,68,68,0.3)]" />
             Priority Support
           </div>
           <p className="text-xs text-neutral-400 font-light leading-relaxed mb-6 relative z-10">
@@ -319,13 +319,13 @@ export default function WellnessPage() {
                   href={`tel:${number}`}
                   className="flex items-center gap-2 text-sm font-medium text-white group-hover:text-red-400 transition-colors"
                 >
-                  <Phone className="h-3.5 w-3.5 text-red-500" /> {number}
+                  <Phone size={14} className="text-red-500" /> {number}
                 </a>
               </div>
             ))}
           </div>
         </div>
- 
+
         {/* Tips */}
         <div className="glass-panel rounded-2xl p-6 border-white/5 shadow-2xl relative">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0A8F6A] mb-6">Wellness Practices</p>
@@ -344,7 +344,7 @@ export default function WellnessPage() {
             ))}
           </div>
         </div>
- 
+
         {/* Privacy note */}
         <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.01] p-6 text-center">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 mb-2">Secure Channel</p>

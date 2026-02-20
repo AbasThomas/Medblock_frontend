@@ -2,16 +2,16 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  BookOpen,
-  Download,
-  Filter,
-  Loader2,
-  Plus,
-  Search,
-  Star,
-  Upload,
-  X,
-} from "lucide-react";
+  BookOpen01Icon,
+  Download01Icon,
+  FilterIcon,
+  PlusSignIcon,
+  Search01Icon,
+  StarIcon,
+  Upload01Icon,
+  Cancel01Icon as XIcon,
+} from "hugeicons-react";
+import { Loader2 } from "lucide-react"; // Keeping Loader2 for the spinner
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { getResources, createResource, incrementDownload } from "@/lib/supabase/queries";
@@ -181,14 +181,14 @@ export default function ResourcesPage() {
           onClick={() => setShowUpload(true)}
           className="inline-flex items-center gap-2 rounded-lg bg-[#0A8F6A] px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:opacity-90 shadow-lg shadow-emerald-500/20 transition-all"
         >
-          <Plus className="h-4 w-4" /> Upload Resource
+          <PlusSignIcon size={16} /> Upload Resource
         </button>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
         <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 focus-within:border-[#0A8F6A]/50 transition-colors">
-          <Search className="h-4 w-4 text-neutral-500" />
+          <Search01Icon size={16} className="text-neutral-500" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -197,13 +197,13 @@ export default function ResourcesPage() {
           />
           {search && (
             <button onClick={() => setSearch("")}>
-              <X className="h-3.5 w-3.5 text-neutral-500 hover:text-white" />
+              <XIcon size={14} className="text-neutral-500 hover:text-white" />
             </button>
           )}
         </div>
 
         <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 focus-within:border-[#0A8F6A]/50 transition-colors">
-          <Filter className="h-4 w-4 text-neutral-500" />
+          <FilterIcon size={16} className="text-neutral-500" />
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
@@ -233,7 +233,7 @@ export default function ResourcesPage() {
         </div>
       ) : resources.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed py-16 text-center">
-          <BookOpen className="mx-auto h-10 w-10 text-muted-foreground/40" />
+          <BookOpen01Icon size={40} className="mx-auto text-muted-foreground/40" />
           <p className="mt-3 text-sm font-medium text-muted-foreground">No resources found</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {search || typeFilter ? "Try different filters." : "Be the first to upload!"}
@@ -242,7 +242,7 @@ export default function ResourcesPage() {
             onClick={() => setShowUpload(true)}
             className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white"
           >
-            <Upload className="h-4 w-4" /> Upload first resource
+            <Upload01Icon size={16} /> Upload first resource
           </button>
         </div>
       ) : (
@@ -251,7 +251,7 @@ export default function ResourcesPage() {
             <div key={resource.id} className="glass-panel flex flex-col rounded-2xl p-6 shadow-2xl group hover:border-[#0A8F6A]/30 transition-all duration-500">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/5 border border-white/5 text-neutral-400 group-hover:text-[#0A8F6A] transition-colors">
-                  <BookOpen className="h-6 w-6" />
+                  <BookOpen01Icon size={24} />
                 </div>
                 <div className="flex flex-wrap gap-1">
                   <span className={cn("rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest border", getResourceTypeColor(resource.type))}>
@@ -284,10 +284,10 @@ export default function ResourcesPage() {
               <div className="mt-6 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-neutral-500 pt-6 border-t border-white/5">
                 <div className="flex items-center gap-4">
                   <span className="flex items-center gap-1.5">
-                    <Download className="h-3.5 w-3.5 text-[#0A8F6A]" /> {resource.downloads}
+                    <Download01Icon size={14} className="text-[#0A8F6A]" /> {resource.downloads}
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
+                    <StarIcon size={14} className="fill-yellow-500 text-yellow-500" />
                     {resource.rating}
                   </span>
                 </div>
@@ -300,12 +300,12 @@ export default function ResourcesPage() {
                 disabled={resource.is_premium}
                 className={cn(
                   "mt-6 flex w-full items-center justify-center gap-2 rounded-lg py-3 text-xs font-bold uppercase tracking-widest transition-all shadow-lg",
-                resource.is_premium
+                  resource.is_premium
                     ? "bg-white/5 border border-white/10 text-neutral-600 cursor-not-allowed shadow-none"
                     : "bg-[#0A8F6A] text-white hover:opacity-90 shadow-emerald-500/20",
                 )}
               >
-                <Download className="h-3.5 w-3.5" />
+                <Download01Icon size={14} />
                 {resource.is_premium ? "Upgrade Required" : "Download Resource"}
               </button>
             </div>
@@ -326,7 +326,7 @@ export default function ResourcesPage() {
                 }}
                 className="rounded-lg p-1 hover:bg-muted"
               >
-                <X className="h-4 w-4" />
+                <XIcon size={16} />
               </button>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">

@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
-  ArrowRight,
-  BookOpen,
-  Calendar,
-  HeartPulse,
-  Trophy,
-  Video,
-} from "lucide-react";
+  ArrowRight01Icon,
+  BookOpen01Icon,
+  Calendar01Icon,
+  Activity01Icon,
+  Award01Icon as TrophyIcon,
+  VideoReplayIcon,
+} from "hugeicons-react";
 import { createClient } from "@/lib/supabase/server";
 import { getLectures, getResources, getOpportunities } from "@/lib/supabase/queries";
 import { formatNaira, formatDateTime, timeAgo } from "@/lib/utils";
@@ -112,7 +112,7 @@ export default async function DashboardPage() {
               className="group/btn relative inline-flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-6 py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-white/10 transition-all backdrop-blur-md overflow-hidden"
             >
               <div className="absolute inset-0 bg-[#0A8F6A]/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
-              <Video className="h-4 w-4 relative z-10 text-[#0A8F6A]" />
+              <VideoReplayIcon size={16} className="relative z-10 text-[#0A8F6A]" />
               <span className="relative z-10">My Lectures</span>
             </Link>
             <Link
@@ -120,7 +120,7 @@ export default async function DashboardPage() {
               className="group/btn relative inline-flex items-center gap-2 rounded-xl bg-[#0A8F6A] px-6 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20 hover:opacity-90 transition-all overflow-hidden"
             >
               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
-              <Trophy className="h-4 w-4 relative z-10" />
+              <TrophyIcon size={16} className="relative z-10" />
               <span className="relative z-10">Opportunities</span>
             </Link>
           </div>
@@ -133,25 +133,25 @@ export default async function DashboardPage() {
           label="Total Lectures"
           value={lectures.length}
           sub={`${liveLectures.length} live now`}
-          icon={Video}
+          icon={VideoReplayIcon}
         />
         <StatCard
           label="Resources Available"
           value={resources.length}
           sub="Browse marketplace"
-          icon={BookOpen}
+          icon={BookOpen01Icon}
         />
         <StatCard
           label="Opportunities"
           value={opportunities.length}
           sub="Open applications"
-          icon={Trophy}
+          icon={TrophyIcon}
         />
         <StatCard
           label="Points Earned"
           value={profile.points ?? 0}
           sub="Gamification score"
-          icon={HeartPulse}
+          icon={Activity01Icon}
         />
       </div>
 
@@ -161,7 +161,7 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-medium text-white tracking-tight">Recent Lectures</h2>
             <Link href="/dashboard/lectures" className="flex items-center gap-1 text-xs text-emerald-500 hover:text-emerald-400 hover:underline transition-colors">
-              View all <ArrowRight className="h-3 w-3" />
+              View all <ArrowRight01Icon size={12} />
             </Link>
           </div>
 
@@ -177,7 +177,7 @@ export default async function DashboardPage() {
                     "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white shadow-lg",
                     lecture.is_live ? "bg-red-500/80 shadow-red-500/20 animate-pulse" : "bg-emerald-600/80 shadow-emerald-500/20",
                   )}>
-                    <Video className="h-4 w-4" />
+                    <VideoReplayIcon size={16} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -192,13 +192,13 @@ export default async function DashboardPage() {
                       {lecture.course_code} · {lecture.lecturer_name}
                     </p>
                     <p className="mt-0.5 flex items-center gap-1 text-xs text-neutral-500">
-                      <Calendar className="h-3 w-3" />
+                      <Calendar01Icon size={12} />
                       {formatDateTime(lecture.scheduled_at)}
                     </p>
                   </div>
                   {lecture.is_live && (
                     <Link
-                      href={`/dashboard/lectures`}
+                      href={`/ dashboard / lectures`}
                       className="shrink-0 rounded-lg bg-red-500 px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
                     >
                       Join
@@ -215,7 +215,7 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-medium text-white tracking-tight">Recent Resources</h2>
             <Link href="/dashboard/resources" className="flex items-center gap-1 text-xs text-emerald-500 hover:text-emerald-400 hover:underline transition-colors">
-              View all <ArrowRight className="h-3 w-3" />
+              View all <ArrowRight01Icon size={12} />
             </Link>
           </div>
 
@@ -228,7 +228,7 @@ export default async function DashboardPage() {
               resources.map((resource) => (
                 <div key={resource.id} className="flex items-start gap-3 rounded-xl border border-white/5 bg-white/5 p-3 hover:bg-white/10 transition-colors group">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 border border-white/5 text-neutral-400 group-hover:text-white transition-colors">
-                    <BookOpen className="h-4 w-4" />
+                    <BookOpen01Icon size={16} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-neutral-200 group-hover:text-white transition-colors">{resource.title}</p>
@@ -254,7 +254,7 @@ export default async function DashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-medium text-white tracking-tight">Open Opportunities</h2>
           <Link href="/dashboard/opportunities" className="flex items-center gap-1 text-xs text-emerald-500 hover:text-emerald-400 hover:underline transition-colors">
-            View all <ArrowRight className="h-3 w-3" />
+            View all <ArrowRight01Icon size={12} />
           </Link>
         </div>
 

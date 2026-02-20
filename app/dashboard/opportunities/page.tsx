@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  ArrowUpRight,
-  Clock,
-  Filter,
-  Loader2,
-  MapPin,
-  Search,
-  Sparkles,
-  Trophy,
-  Wifi,
-  X,
-} from "lucide-react";
+  ArrowUpRight01Icon,
+  Clock01Icon,
+  FilterIcon,
+  Location01Icon,
+  Search01Icon,
+  SparklesIcon,
+  Award01Icon as TrophyIcon,
+  Wifi01Icon,
+  Cancel01Icon,
+} from "hugeicons-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { getOpportunities } from "@/lib/supabase/queries";
@@ -192,25 +192,25 @@ export default function OpportunitiesPage() {
           onClick={() => setShowMatchPanel(true)}
           className="inline-flex items-center gap-2 rounded-lg bg-[#0A8F6A] px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:opacity-90 shadow-lg shadow-emerald-500/20 transition-all"
         >
-          <Sparkles className="h-4 w-4" /> Run AI Matching
+          <SparklesIcon size={16} /> Run AI Matching
         </button>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
         <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 focus-within:border-[#0A8F6A]/50 transition-colors">
-          <Search className="h-4 w-4 text-neutral-500" />
+          <Search01Icon size={16} className="text-neutral-500" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search opportunities..."
             className="w-44 bg-transparent text-sm outline-none text-neutral-200 placeholder:text-neutral-500"
           />
-          {search && <button onClick={() => setSearch("")}><X className="h-3.5 w-3.5 text-neutral-500 hover:text-white" /></button>}
+          {search && <button onClick={() => setSearch("")}><Cancel01Icon size={14} className="text-neutral-500 hover:text-white" /></button>}
         </div>
 
         <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 focus-within:border-[#0A8F6A]/50 transition-colors">
-          <Filter className="h-4 w-4 text-neutral-500" />
+          <FilterIcon size={16} className="text-neutral-500" />
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
@@ -228,7 +228,7 @@ export default function OpportunitiesPage() {
             remoteOnly ? "border-[#0A8F6A] bg-[#0A8F6A] text-white shadow-[0_0_15px_rgba(10,143,106,0.3)]" : "bg-black/20 border-white/10 text-neutral-500 hover:text-white hover:border-white/20",
           )}
         >
-          <Wifi className="h-4 w-4" /> Remote Only
+          <Wifi01Icon size={16} /> Remote Only
         </button>
 
         {matchMode && (
@@ -243,7 +243,7 @@ export default function OpportunitiesPage() {
 
       {matchMode && (
         <div className="flex items-center gap-2 rounded-xl border border-[#0A8F6A]/30 bg-[#0A8F6A]/5 px-4 py-3 text-sm text-[#0A8F6A] font-light">
-          <Sparkles className="h-4 w-4 shadow-[0_0_10px_rgba(10,143,106,0.3)]" />
+          <SparklesIcon size={16} className="shadow-[0_0_10px_rgba(10,143,106,0.3)]" />
           Opportunities ranked by AI fit analysis based on your profile.
         </div>
       )}
@@ -255,7 +255,7 @@ export default function OpportunitiesPage() {
         </div>
       ) : opportunities.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed py-16 text-center">
-          <Trophy className="mx-auto h-10 w-10 text-muted-foreground/40" />
+          <TrophyIcon size={40} className="mx-auto text-muted-foreground/40" />
           <p className="mt-3 text-sm font-medium text-muted-foreground">No opportunities found</p>
         </div>
       ) : (
@@ -294,11 +294,11 @@ export default function OpportunitiesPage() {
 
                 <div className="mt-6 flex flex-wrap gap-4 text-[10px] font-bold uppercase tracking-widest text-neutral-500 pt-6 border-t border-white/5">
                   <span className="flex items-center gap-1.5">
-                    <MapPin className="h-3.5 w-3.5 text-[#0A8F6A]" /> {opp.location}
+                    <Location01Icon size={14} className="text-[#0A8F6A]" /> {opp.location}
                     {opp.is_remote && " • Remote"}
                   </span>
                   <span className={cn("flex items-center gap-1.5", days <= 7 && "text-red-500")}>
-                    <Clock className="h-3.5 w-3.5 text-[#0A8F6A]" />
+                    <Clock01Icon size={14} className="text-[#0A8F6A]" />
                     {days > 0 ? `${days} days remaining` : "Closed"}
                   </span>
                 </div>
@@ -319,7 +319,7 @@ export default function OpportunitiesPage() {
                   rel="noopener noreferrer"
                   className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#0A8F6A] py-3 text-xs font-bold uppercase tracking-widest text-white hover:opacity-90 transition-all shadow-lg shadow-emerald-500/20"
                 >
-                  Apply Now <ArrowUpRight className="h-4 w-4" />
+                  Apply Now <ArrowUpRight01Icon size={16} />
                 </a>
               </div>
             );
@@ -334,11 +334,11 @@ export default function OpportunitiesPage() {
             <div className="absolute inset-0 bg-gradient-to-tr from-[#0A8F6A]/5 to-transparent pointer-events-none"></div>
             <div className="flex items-center justify-between relative z-10 mb-6">
               <div className="flex items-center gap-3">
-                <Sparkles className="h-6 w-6 text-[#0A8F6A]" />
+                <SparklesIcon size={24} className="text-[#0A8F6A]" />
                 <h2 className="text-xl font-medium tracking-tight text-white">AI Match Setup</h2>
               </div>
               <button onClick={() => setShowMatchPanel(false)} className="rounded-full p-2 bg-white/5 border border-white/5 text-neutral-500 hover:text-white transition-all">
-                <X className="h-4 w-4" />
+                <Cancel01Icon size={16} />
               </button>
             </div>
             <p className="text-xs text-neutral-400 font-light leading-relaxed mb-8 relative z-10">

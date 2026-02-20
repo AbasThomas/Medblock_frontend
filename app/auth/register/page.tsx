@@ -4,7 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2, Zap } from "lucide-react";
+import { ArrowLeft01Icon, ViewIcon, ViewOffIcon, ZapIcon } from "hugeicons-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -129,34 +130,38 @@ export default function RegisterPage() {
           />
           <span className="font-bold text-2xl tracking-tight uppercase leading-none">UniBridge</span>
         </Link>
+        <Link href="/" className="mt-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-emerald-500 hover:text-emerald-400 transition-colors w-fit group/back">
+          <ArrowLeft01Icon size={16} className="group-hover/back:-translate-x-1 transition-transform" />
+          Return to Homepage
+        </Link>
+      </div>
 
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest mb-6">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Infrastructure for Excellence
+      <div>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest mb-6">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          Infrastructure for Excellence
+        </div>
+        <p className="text-4xl font-medium tracking-tight leading-tight text-white mb-6">
+          Future-Proof Your <br />
+          <span className="text-emerald-500 italic">Academic Trajectory.</span>
+        </p>
+        <p className="text-neutral-400 font-light leading-relaxed max-w-sm">
+          Deploy intelligence systems that organize, summarize, and prioritize your learning resources 24/7.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {[
+          "Verified Academic Asset Marketplace",
+          "Autonomous Lecture Deconstruction",
+          "Precision Opportunity Sourcing",
+          "Global Research Pipeline Access",
+        ].map((feat) => (
+          <div key={feat} className="flex items-center gap-4 text-sm text-neutral-300 font-light group">
+            <div className="h-px w-6 bg-emerald-900 group-hover:w-10 group-hover:bg-emerald-500 transition-all duration-500" />
+            {feat}
           </div>
-          <p className="text-4xl font-medium tracking-tight leading-tight text-white mb-6">
-            Future-Proof Your <br />
-            <span className="text-emerald-500 italic">Academic Trajectory.</span>
-          </p>
-          <p className="text-neutral-400 font-light leading-relaxed max-w-sm">
-            Deploy intelligence systems that organize, summarize, and prioritize your learning resources 24/7.
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          {[
-            "Verified Academic Asset Marketplace",
-            "Autonomous Lecture Deconstruction",
-            "Precision Opportunity Sourcing",
-            "Global Research Pipeline Access",
-          ].map((feat) => (
-            <div key={feat} className="flex items-center gap-4 text-sm text-neutral-300 font-light group">
-              <div className="h-px w-6 bg-emerald-900 group-hover:w-10 group-hover:bg-emerald-500 transition-all duration-500" />
-              {feat}
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
 
       {/* Right panel */}
@@ -174,16 +179,16 @@ export default function RegisterPage() {
             <span className="font-bold text-2xl tracking-tight text-white uppercase leading-none">UniBridge</span>
           </Link>
 
-          <div className="mb-10">
+          <div className="mb-10 mt-8 lg:mt-0">
             <div className="flex items-center gap-3 mb-4">
               <div className={cn("h-1 flex-1 rounded-full transition-all duration-500", step >= 1 ? "bg-emerald-500" : "bg-white/5")} />
               <div className={cn("h-1 flex-1 rounded-full transition-all duration-500", step >= 2 ? "bg-emerald-500" : "bg-white/5")} />
             </div>
             <h1 className="text-3xl font-medium text-white tracking-tight">
-              {step === 1 ? "Protocol Initialization" : "Sector Alignment"}
+              {step === 1 ? "Create Account" : "Academic Details"}
             </h1>
             <p className="mt-2 text-sm text-neutral-400 font-light">
-              {step === 1 ? "Start your sequence by authenticating your identity." : "Specify your academic domain to localize intelligence."}
+              {step === 1 ? "Join UniBridge to access intelligent academic tools." : "Tell us about your academic role to personalize your experience."}
             </p>
           </div>
 
@@ -205,7 +210,7 @@ export default function RegisterPage() {
 
               <div className="my-8 flex items-center gap-4">
                 <div className="h-px flex-1 bg-white/5" />
-                <span className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Registration Flow</span>
+                <span className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Or register with email</span>
                 <div className="h-px flex-1 bg-white/5" />
               </div>
 
@@ -233,8 +238,8 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="pl-1 text-[11px] font-bold text-neutral-500 uppercase tracking-widest">Security Key</label>
-                  <div className="relative">
+                  <label className="pl-1 text-[11px] font-bold text-neutral-500 uppercase tracking-widest">Password</label>
+                  <div className="relative group">
                     <input
                       type={showPassword ? "text" : "password"}
                       value={form.password}
@@ -245,9 +250,9 @@ export default function RegisterPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-600 hover:text-emerald-500 transition-colors p-1"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-600 hover:text-emerald-500 transition-colors p-1 flex items-center justify-center h-full"
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? <ViewOffIcon size={16} /> : <ViewIcon size={16} />}
                     </button>
                   </div>
                 </div>
@@ -262,7 +267,7 @@ export default function RegisterPage() {
                   }}
                   className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white shadow-[0_0_20px_rgba(10,143,106,0.3)] hover:bg-emerald-500 transition-all hover:shadow-[0_0_25px_rgba(10,143,106,0.5)] active:scale-[0.98]"
                 >
-                  CONTINUE TO STAGE 02
+                  CONTINUE TO STEP 2
                 </button>
               </div>
             </div>
@@ -271,7 +276,7 @@ export default function RegisterPage() {
           {step === 2 && (
             <form onSubmit={handleRegister} className="mt-2 space-y-6 animate-soft-fade">
               <div className="space-y-2">
-                <label className="pl-1 text-[11px] font-bold text-neutral-500 uppercase tracking-widest">Identity Sub-type</label>
+                <label className="pl-1 text-[11px] font-bold text-neutral-500 uppercase tracking-widest">I am a...</label>
                 <div className="grid grid-cols-3 gap-3">
                   {(["student", "lecturer", "admin"] as const).map((role) => (
                     <button
@@ -305,7 +310,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="pl-1 text-[11px] font-bold text-neutral-500 uppercase tracking-widest">Operational Domain</label>
+                <label className="pl-1 text-[11px] font-bold text-neutral-500 uppercase tracking-widest">Faculty / Department</label>
                 <select
                   value={form.department}
                   onChange={(e) => update("department", e.target.value)}
@@ -338,31 +343,31 @@ export default function RegisterPage() {
                   onClick={() => setStep(1)}
                   className="flex-1 rounded-xl border border-white/10 py-3.5 text-sm font-bold text-neutral-400 hover:bg-white/5 transition-all uppercase tracking-widest"
                 >
-                  REVERT
+                  BACK
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
                   className="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white shadow-[0_0_20px_rgba(10,143,106,0.3)] hover:bg-emerald-500 transition-all disabled:opacity-60 uppercase tracking-widest active:scale-[0.98]"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Zap className="h-4 w-4" />}
-                  {loading ? "PROCESSING..." : "FINALIZE ARCH"}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <ZapIcon size={16} />}
+                  {loading ? "CREATING..." : "CREATE ACCOUNT"}
                 </button>
               </div>
             </form>
           )}
 
           <p className="mt-8 text-center text-xs text-neutral-500 font-light">
-            Already authorized?{" "}
+            Already have an account?{" "}
             <Link href="/auth/login" className="font-bold text-emerald-500 hover:text-emerald-400 transition-colors hover:underline underline-offset-4">
-              Return to Access Terminal
+              Log in here
             </Link>
           </p>
 
           <p className="mt-6 text-center text-[10px] text-neutral-600 font-medium uppercase tracking-widest leading-relaxed max-w-[280px] mx-auto">
-            By initializing sequence you agree to our{" "}
-            <span className="text-neutral-400 underline cursor-pointer hover:text-white transition-colors">Terms of Op</span> and{" "}
-            <span className="text-neutral-400 underline cursor-pointer hover:text-white transition-colors">Privacy Prot</span>.
+            By creating an account, you agree to our{" "}
+            <span className="text-neutral-400 underline cursor-pointer hover:text-white transition-colors">Terms of Service</span> and{" "}
+            <span className="text-neutral-400 underline cursor-pointer hover:text-white transition-colors">Privacy Policy</span>.
           </p>
         </div>
       </div>

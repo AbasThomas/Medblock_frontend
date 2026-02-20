@@ -5,21 +5,21 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
-  BookOpen,
-  ChevronsLeft,
-  ChevronsRight,
-  HeartPulse,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  Settings,
-  Sparkles,
-  Trophy,
-  User,
-  Video,
-  X,
-  Shield,
-} from "lucide-react";
+  BookOpen01Icon,
+  ArrowShrink02Icon,
+  ArrowExpand02Icon,
+  Activity01Icon,
+  DashboardSquare01Icon,
+  Logout01Icon,
+  Menu01Icon,
+  Settings01Icon,
+  SparklesIcon,
+  Award01Icon as TrophyIcon,
+  UserCircleIcon,
+  VideoReplayIcon,
+  Cancel01Icon,
+  Shield01Icon,
+} from "hugeicons-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -27,12 +27,12 @@ import { toast } from "sonner";
 const SIDEBAR_COLLAPSED_KEY = "unibridge.sidebar.collapsed";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/lectures", label: "Lectures", icon: Video },
-  { href: "/dashboard/resources", label: "Resources", icon: BookOpen },
-  { href: "/dashboard/opportunities", label: "Opportunities", icon: Trophy },
-  { href: "/dashboard/wellness", label: "Wellness", icon: HeartPulse },
-  { href: "/dashboard/profile", label: "Profile", icon: User },
+  { href: "/dashboard", label: "Overview", icon: DashboardSquare01Icon, exact: true },
+  { href: "/dashboard/lectures", label: "Lectures", icon: VideoReplayIcon },
+  { href: "/dashboard/resources", label: "Resources", icon: BookOpen01Icon },
+  { href: "/dashboard/opportunities", label: "Opportunities", icon: TrophyIcon },
+  { href: "/dashboard/wellness", label: "Wellness", icon: Activity01Icon },
+  { href: "/dashboard/profile", label: "Profile", icon: UserCircleIcon },
 ];
 
 interface SidebarProps {
@@ -144,7 +144,7 @@ function SidebarContent({
         </Link>
         {onClose && (
           <button onClick={onClose} className="rounded-lg p-1 text-neutral-400 transition-all hover:bg-white/5 hover:text-white lg:hidden">
-            <X className="h-5 w-5" />
+            <Cancel01Icon size={20} />
           </button>
         )}
         {!onClose && onToggleCollapse && (
@@ -153,7 +153,7 @@ function SidebarContent({
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className="rounded-lg p-1 text-neutral-400 transition-all hover:bg-white/5 hover:text-white"
           >
-            {collapsed ? <ChevronsRight className="h-5 w-5" /> : <ChevronsLeft className="h-5 w-5" />}
+            {collapsed ? <ArrowExpand02Icon size={20} /> : <ArrowShrink02Icon size={20} />}
           </button>
         )}
       </div>
@@ -177,16 +177,16 @@ function SidebarContent({
             </p>
           )}
           <div className="space-y-1">
-            <NavLink href="/dashboard/ai-tools" label="AI Toolkit" icon={Sparkles} collapsed={collapsed} onClick={onClose} />
+            <NavLink href="/dashboard/ai-tools" label="AI Toolkit" icon={SparklesIcon} collapsed={collapsed} onClick={onClose} />
             {role === "admin" && (
-              <NavLink href="/dashboard/admin" label="Admin Hub" icon={Shield} collapsed={collapsed} onClick={onClose} />
+              <NavLink href="/dashboard/admin" label="Admin Hub" icon={Shield01Icon} collapsed={collapsed} onClick={onClose} />
             )}
           </div>
         </div>
       </nav>
 
       <div className={cn("space-y-2 border-t border-white/5 bg-black/40 backdrop-blur-xl", collapsed ? "px-3 py-4" : "px-4 py-6")}>
-        <NavLink href="/dashboard/profile" label="Account Settings" icon={Settings} collapsed={collapsed} onClick={onClose} />
+        <NavLink href="/dashboard/profile" label="Account Settings" icon={Settings01Icon} collapsed={collapsed} onClick={onClose} />
         <button
           onClick={handleLogout}
           title={collapsed ? "Sign out" : undefined}
@@ -195,7 +195,7 @@ function SidebarContent({
             collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-3 px-4",
           )}
         >
-          <LogOut className="h-6 w-6 shrink-0 transition-transform group-hover:translate-x-1" />
+          <Logout01Icon size={24} className="shrink-0 transition-transform group-hover:translate-x-1" />
           {!collapsed && <span>Sign Out</span>}
         </button>
       </div>
@@ -241,7 +241,7 @@ export function Sidebar({ role }: SidebarProps) {
         onClick={() => setOpen(true)}
         className="fixed left-4 top-4 z-40 flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-black/50 text-white shadow-sm backdrop-blur-md lg:hidden"
       >
-        <Menu className="h-6 w-6" />
+        <Menu01Icon size={24} />
       </button>
 
       {open && (

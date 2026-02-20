@@ -1,8 +1,8 @@
 import { Header } from "@/components/landing/Header";
 import { Hero } from "@/components/landing/Hero";
 import { WhyExists } from "@/components/landing/WhyExists";
-import { Deliverables } from "@/components/landing/Deliverables";
 import { Solutions } from "@/components/landing/Solutions";
+import { FeaturesByRole } from "@/components/landing/FeaturesByRole";
 import { Process } from "@/components/landing/Process";
 import { Order } from "@/components/landing/Order";
 import { FAQ } from "@/components/landing/FAQ";
@@ -14,8 +14,8 @@ export default function Home() {
       <Header />
       <Hero />
       <WhyExists />
-      <Deliverables />
       <Solutions />
+      <FeaturesByRole />
       <Process />
       <Order />
       <FAQ />

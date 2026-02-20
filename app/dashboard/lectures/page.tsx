@@ -2,16 +2,16 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  Calendar,
-  Clock,
-  Download,
-  Play,
-  Radio,
-  Search,
-  Sparkles,
-  Users,
-  Video,
-} from "lucide-react";
+  Calendar01Icon,
+  Clock01Icon,
+  Download01Icon,
+  PlayIcon,
+  SignalIcon,
+  Search01Icon,
+  SparklesIcon,
+  UserGroupIcon,
+  VideoReplayIcon,
+} from "hugeicons-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { getLectures } from "@/lib/supabase/queries";
@@ -163,7 +163,7 @@ export default function LecturesPage() {
         </div>
 
         <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 sm:ml-auto focus-within:border-[#0A8F6A]/50 transition-colors">
-          <Search className="h-4 w-4 text-neutral-500" />
+          <Search01Icon size={16} className="text-neutral-500" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -182,7 +182,7 @@ export default function LecturesPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed py-16 text-center">
-          <Video className="mx-auto h-10 w-10 text-muted-foreground/40" />
+          <VideoReplayIcon size={40} className="mx-auto text-muted-foreground/40" />
           <p className="mt-3 text-sm font-medium text-muted-foreground">No lectures found</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {search ? "Try a different search." : "Check back when lectures are scheduled."}
@@ -203,7 +203,7 @@ export default function LecturesPage() {
                     lecture.is_live ? "bg-red-500 shadow-red-500/20 animate-pulse" : "bg-[#0A8F6A] shadow-emerald-500/20",
                   )}
                 >
-                  {lecture.is_live ? <Radio className="h-6 w-6" /> : <Video className="h-6 w-6" />}
+                  {lecture.is_live ? <SignalIcon size={24} /> : <VideoReplayIcon size={24} />}
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {lecture.is_live && (
@@ -236,15 +236,15 @@ export default function LecturesPage() {
               {/* Meta */}
               <div className="mt-6 space-y-2 pt-6 border-t border-white/5">
                 <div className="flex items-center gap-3 text-[10px] font-medium uppercase tracking-widest text-neutral-500">
-                  <Calendar className="h-3.5 w-3.5 text-[#0A8F6A]" />
+                  <Calendar01Icon size={14} className="text-[#0A8F6A]" />
                   {formatDateTime(lecture.scheduled_at)}
                 </div>
                 <div className="flex items-center gap-4 text-[10px] font-medium uppercase tracking-widest text-neutral-500">
                   <span className="flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5 text-[#0A8F6A]" /> {lecture.duration ?? 60} MIN
+                    <Clock01Icon size={14} className="text-[#0A8F6A]" /> {lecture.duration ?? 60} MIN
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5 text-[#0A8F6A]" /> {lecture.attendees} ACCESSES
+                    <UserGroupIcon size={14} className="text-[#0A8F6A]" /> {lecture.attendees} ACCESSES
                   </span>
                 </div>
               </div>
@@ -266,7 +266,7 @@ export default function LecturesPage() {
                     rel="noopener noreferrer"
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:bg-red-600 transition-all shadow-lg shadow-red-500/20"
                   >
-                    <Play className="h-3.5 w-3.5" /> Join Live
+                    <PlayIcon size={14} /> Join Live
                   </a>
                 ) : (
                   lecture.is_recorded && (
@@ -276,13 +276,13 @@ export default function LecturesPage() {
                       rel="noopener noreferrer"
                       className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0A8F6A] px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:opacity-90 transition-all shadow-lg shadow-emerald-500/20"
                     >
-                      <Play className="h-3.5 w-3.5" /> Watch
+                      <PlayIcon size={14} /> Watch
                     </a>
                   )
                 )}
                 {lecture.offline_available && (
                   <button className="flex items-center justify-center rounded-lg border border-white/10 bg-white/5 p-2.5 text-neutral-400 hover:text-white hover:border-white/20 transition-all">
-                    <Download className="h-4 w-4" />
+                    <Download01Icon size={16} />
                   </button>
                 )}
                 <button
@@ -290,7 +290,7 @@ export default function LecturesPage() {
                   disabled={summarizingId === lecture.id}
                   className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-neutral-400 hover:text-white hover:border-white/20 transition-all disabled:opacity-60"
                 >
-                  <Sparkles className="h-3.5 w-3.5 text-[#0A8F6A]" />
+                  <SparklesIcon size={14} className="text-[#0A8F6A]" />
                   {summarizingId === lecture.id ? "..." : "AI Sync"}
                 </button>
               </div>
