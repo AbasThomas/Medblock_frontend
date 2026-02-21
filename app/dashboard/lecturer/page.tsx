@@ -10,7 +10,7 @@ export default async function LecturerDashboardPage() {
 
   if (!user) redirect("/auth/login");
 
-  const [profileRes, lecturesRes, resourcesRes, opportunitiesRes] = await Promise.all([
+  const [profileRes, lecturesRes, resourcesRes, opportunitiesRes, eventsRes] = await Promise.all([
     supabase.from("profiles").select("name, role, university").eq("id", user.id).single(),
     supabase
       .from("lectures")
@@ -19,6 +19,7 @@ export default async function LecturerDashboardPage() {
       .order("scheduled_at", { ascending: false }),
     supabase.from("resources").select("id", { count: "exact", head: true }).eq("uploaded_by", user.id),
     supabase.from("opportunities").select("id", { count: "exact", head: true }).eq("created_by", user.id),
+    supabase.from("student_events").select("id", { count: "exact", head: true }).eq("created_by", user.id),
   ]);
 
   const profile = profileRes.data;
@@ -42,6 +43,7 @@ export default async function LecturerDashboardPage() {
       userId={user.id}
       resourceCount={resourcesRes.count ?? 0}
       opportunityCount={opportunitiesRes.count ?? 0}
+      eventCount={eventsRes.count ?? 0}
     />
   );
 }

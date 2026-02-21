@@ -7,16 +7,41 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const nextParam = searchParams.get("next");
   const next =
-    nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
-      ? nextParam
-      : "/dashboard";
+    nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : null;
   const siteUrl = getSiteUrl(origin);
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${siteUrl}${next}`);
+      if (next) {
+        return NextResponse.redirect(`${siteUrl}${next}`);
+      }
+
+      let destination = "/dashboard";
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user?.id) {
+        try {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single();
+          const role = profile?.role || user.user_metadata?.role;
+          if (role === "lecturer") {
+            destination = "/dashboard/lecturer";
+          }
+        } catch {
+          if (user.user_metadata?.role === "lecturer") {
+            destination = "/dashboard/lecturer";
+          }
+        }
+      }
+
+      return NextResponse.redirect(`${siteUrl}${destination}`);
     }
   }
 

@@ -161,22 +161,40 @@ export default function ProfilePage() {
       if (!user) throw new Error("Not authenticated.");
 
       const extension = file.name.split(".").pop() ?? "jpg";
-      const path = `avatars/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+      const uploadTargets = [
+        { bucket: "resources", path: `${user.id}/avatars/${filename}` },
+        { bucket: "avatars", path: `${user.id}/${filename}` },
+      ];
 
-      const { error: uploadError } = await supabase.storage
-        .from("resources")
-        .upload(path, file, {
-          cacheControl: "3600",
-          upsert: true,
-        });
+      let uploadedBucket: string | null = null;
+      let uploadedPath: string | null = null;
+      const uploadErrors: string[] = [];
 
-      if (uploadError) {
+      for (const target of uploadTargets) {
+        const { error: uploadError } = await supabase.storage
+          .from(target.bucket)
+          .upload(target.path, file, {
+            cacheControl: "3600",
+            upsert: true,
+          });
+
+        if (!uploadError) {
+          uploadedBucket = target.bucket;
+          uploadedPath = target.path;
+          break;
+        }
+
+        uploadErrors.push(`${target.bucket}: ${uploadError.message}`);
+      }
+
+      if (!uploadedBucket || !uploadedPath) {
         throw new Error(
-          "Profile image upload failed. Confirm storage bucket 'resources' exists and is writable.",
+          `Profile image upload failed. ${uploadErrors.join(" | ") || "No writable storage bucket found."}`,
         );
       }
 
-      const { data: publicUrl } = supabase.storage.from("resources").getPublicUrl(path);
+      const { data: publicUrl } = supabase.storage.from(uploadedBucket).getPublicUrl(uploadedPath);
       const updated = await updateProfile(supabase, user.id, { avatar: publicUrl.publicUrl });
 
       setProfile((prev) =>

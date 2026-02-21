@@ -91,7 +91,7 @@ export default function RegisterPage() {
     }
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
         options: {
@@ -107,7 +107,9 @@ export default function RegisterPage() {
       });
       if (error) throw error;
       toast.success("Account created. Check your email to verify.");
-      router.push("/dashboard");
+      const fallbackRole =
+        typeof data.user?.user_metadata?.role === "string" ? data.user.user_metadata.role : form.role;
+      router.push(fallbackRole === "lecturer" ? "/dashboard/lecturer" : "/dashboard");
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Registration failed. Please try again.");

@@ -20,6 +20,20 @@ export default function LoginPage() {
 
   const supabase = createClient();
 
+  const resolveDashboardPath = async (userId: string, fallbackRole?: string) => {
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+      const role = data?.role || fallbackRole;
+      return role === "lecturer" ? "/dashboard/lecturer" : "/dashboard";
+    } catch {
+      return fallbackRole === "lecturer" ? "/dashboard/lecturer" : "/dashboard";
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
@@ -28,10 +42,16 @@ export default function LoginPage() {
     }
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      const destination = data.user
+        ? await resolveDashboardPath(
+            data.user.id,
+            typeof data.user.user_metadata?.role === "string" ? data.user.user_metadata.role : undefined,
+          )
+        : "/dashboard";
       toast.success("Welcome back!");
-      router.push("/dashboard");
+      router.push(destination);
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed. Please try again.");

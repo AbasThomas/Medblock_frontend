@@ -87,12 +87,14 @@ export function LecturerHubClient({
   userId,
   resourceCount,
   opportunityCount,
+  eventCount,
 }: {
   initialSessions: Session[];
   profile: { name: string; role: string; university: string };
   userId: string;
   resourceCount: number;
   opportunityCount: number;
+  eventCount: number;
 }) {
   const supabase = useMemo(() => createClient(), []);
 
@@ -207,6 +209,7 @@ export function LecturerHubClient({
     { label: "Recorded", value: recordedSessions.length, icon: Clock01Icon },
     { label: "Resources", value: resourceCount, icon: BookOpen01Icon },
     { label: "Opportunities", value: opportunityCount, icon: Award01Icon },
+    { label: "Hosted Events", value: eventCount, icon: UserGroupIcon },
   ];
 
   // ── Handlers ─────────────────────────────────────────────────────────────
@@ -659,7 +662,7 @@ export function LecturerHubClient({
       </div>
 
       {/* Quick Links */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Link
           href="/dashboard/resources"
           className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/25 p-5 transition-colors hover:border-[#0A8F6A]/30 hover:bg-[#0A8F6A]/5"
@@ -682,6 +685,19 @@ export function LecturerHubClient({
             <div>
               <p className="text-sm font-semibold text-white">Opportunities Board</p>
               <p className="text-xs text-neutral-500">{opportunityCount} opportunities posted</p>
+            </div>
+          </div>
+          <ArrowRight01Icon size={16} className="text-neutral-500" />
+        </Link>
+        <Link
+          href="/dashboard/events"
+          className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/25 p-5 transition-colors hover:border-[#0A8F6A]/30 hover:bg-[#0A8F6A]/5"
+        >
+          <div className="flex items-center gap-3">
+            <Calendar01Icon size={22} className="text-[#0A8F6A]" />
+            <div>
+              <p className="text-sm font-semibold text-white">Events Hub</p>
+              <p className="text-xs text-neutral-500">{eventCount} events hosted</p>
             </div>
           </div>
           <ArrowRight01Icon size={16} className="text-neutral-500" />

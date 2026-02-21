@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   Cancel01Icon,
   Clock01Icon,
@@ -9,6 +10,7 @@ import {
   PlusSignIcon,
   PlayIcon,
   Search01Icon,
+  SignalIcon,
   Upload01Icon,
   VideoReplayIcon,
 } from "hugeicons-react";
@@ -199,7 +201,7 @@ export default function LecturesPage() {
       let finalVideoUrl = videoForm.video_url.trim();
 
       if (uploadMode === "file" && videoFile) {
-        const path = `videos/${userId}/${Date.now()}-${sanitizeFilename(videoFile.name)}`;
+        const path = `${userId}/videos/${Date.now()}-${sanitizeFilename(videoFile.name)}`;
         const { error: uploadError } = await supabase.storage
           .from("resources")
           .upload(path, videoFile, {
@@ -271,12 +273,20 @@ export default function LecturesPage() {
           </p>
         </div>
         {canUpload && (
-          <button
-            onClick={() => setShowUpload(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#0A8F6A] px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:opacity-90 shadow-lg shadow-emerald-500/20 transition-all"
-          >
-            <PlusSignIcon size={16} /> Upload Video
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/dashboard/lecturer"
+              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:bg-white/10 transition-all"
+            >
+              <SignalIcon size={16} /> Go Live
+            </Link>
+            <button
+              onClick={() => setShowUpload(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#0A8F6A] px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:opacity-90 shadow-lg shadow-emerald-500/20 transition-all"
+            >
+              <PlusSignIcon size={16} /> Upload Video
+            </button>
+          </div>
         )}
       </div>
 

@@ -312,7 +312,9 @@ export async function getStudentEvents(
   if (filters?.createdBy) query = query.eq("created_by", filters.createdBy);
   if (filters?.search) {
     const q = filters.search.trim();
-    query = query.or(`title.ilike.%${q}%,details.ilike.%${q}%,location.ilike.%${q}%`);
+    query = query.or(
+      `title.ilike.%${q}%,details.ilike.%${q}%,location.ilike.%${q}%,faculty_hosting.ilike.%${q}%`,
+    );
   }
 
   const { data, error } = await query;
@@ -331,6 +333,9 @@ export async function createStudentEvent(
     created_by: string;
     created_by_name?: string;
     university?: string;
+    faculty_hosting?: string;
+    sponsors?: string[];
+    general_registration_url?: string;
     is_virtual?: boolean;
   },
 ) {

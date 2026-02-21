@@ -89,6 +89,9 @@ export default async function DashboardPage() {
 
   const displayName = profile.name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Student";
   const resolvedRole = profile.role || user.user_metadata?.role || "student";
+  if (resolvedRole === "lecturer") {
+    redirect("/dashboard/lecturer");
+  }
   const videoLessons = lectures;
 
   return (

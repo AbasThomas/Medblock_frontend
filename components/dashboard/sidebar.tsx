@@ -28,7 +28,7 @@ import { toast } from "sonner";
 
 const SIDEBAR_COLLAPSED_KEY = "unibridge.sidebar.collapsed";
 
-const NAV_ITEMS = [
+const STUDENT_NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: DashboardSquare01Icon, exact: true },
   { href: "/dashboard/lectures", label: "Videos", icon: VideoReplayIcon },
   { href: "/dashboard/resources", label: "Resources", icon: BookOpen01Icon },
@@ -36,6 +36,15 @@ const NAV_ITEMS = [
   { href: "/dashboard/events", label: "Events", icon: Calendar01Icon },
   { href: "/dashboard/gamification", label: "Gamification", icon: StarIcon },
   { href: "/dashboard/wellness", label: "Wellness", icon: Activity01Icon },
+  { href: "/dashboard/profile", label: "Profile", icon: UserCircleIcon },
+];
+
+const LECTURER_NAV_ITEMS = [
+  { href: "/dashboard/lecturer", label: "Lecturer Hub", icon: DashboardSquare01Icon, exact: true },
+  { href: "/dashboard/lectures", label: "Videos", icon: VideoReplayIcon },
+  { href: "/dashboard/resources", label: "Resources", icon: BookOpen01Icon },
+  { href: "/dashboard/opportunities", label: "Opportunities", icon: TrophyIcon },
+  { href: "/dashboard/events", label: "Events", icon: Calendar01Icon },
   { href: "/dashboard/profile", label: "Profile", icon: UserCircleIcon },
 ];
 
@@ -116,6 +125,8 @@ function SidebarContent({
 }) {
   const router = useRouter();
   const supabase = createClient();
+  const isLecturerView = role === "lecturer" || role === "admin";
+  const navItems = isLecturerView ? LECTURER_NAV_ITEMS : STUDENT_NAV_ITEMS;
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -169,7 +180,7 @@ function SidebarContent({
           </p>
         )}
         <div className="space-y-1">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <NavLink key={item.href} {...item} collapsed={collapsed} onClick={onClose} />
           ))}
         </div>
